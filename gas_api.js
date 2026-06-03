@@ -20,6 +20,14 @@ function doGet(e) {
     const dan = e.parameter.dan;
     return jsonResponse(getItems(dan));
   }
+  if (action === 'proxyImage') {
+    const url = e.parameter.url;
+    return imageResponse(url);
+  }
+  if (action === 'proxyImages') {
+    const urls = JSON.parse(e.parameter.urls || '[]');
+    return imageBatchResponse(urls);
+  }
   return jsonResponse({ error: 'unknown action' });
 }
 
@@ -113,6 +121,45 @@ function saveItem(data) {
   return { error: 'item not found: ' + itemId };
 }
 
+
+// ------------------------------------------------------------
+//  複数画像をまとめてBase64で返す（一括プロキシ）
+// ------------------------------------------------------------
+function imageBatchResponse(urls) {
+  const result = {};
+  urls.forEach(url => {
+    try {
+      const res  = UrlFetchApp.fetch(url);
+      const blob = res.getBlob();
+      const b64  = Utilities.base64Encode(blob.getBytes());
+      const mime = blob.getContentType() || 'image/webp';
+      result[url] = { b64, mime };
+    } catch(e) {
+      result[url] = null;
+    }
+  });
+  return ContentService
+    .createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ------------------------------------------------------------
+//  画像をBase64で返す（CORS回避プロキシ）
+// ------------------------------------------------------------
+function imageResponse(url) {
+  try {
+    const res  = UrlFetchApp.fetch(url);
+    const blob = res.getBlob();
+    const b64  = Utilities.base64Encode(blob.getBytes());
+    const mime = blob.getContentType() || 'image/webp';
+    return ContentService
+      .createTextOutput(JSON.stringify({ b64, mime }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch(e) {
+    return jsonResponse({ error: 'fetch failed: ' + e.message });
+  }
+}
+
 // ------------------------------------------------------------
 //  ユーティリティ
 // ------------------------------------------------------------
@@ -121,3 +168,8 @@ function jsonResponse(obj) {
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }
+
+// ------------------------------------------------------------
+//  GET  ?action=proxyImage&url=https://...
+//  CORS回避のための画像プロキシ（Base64で返す）
+// ------------------------------------------------------------
