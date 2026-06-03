@@ -682,10 +682,8 @@ async function exportTradeImage(){
     const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
     const isPWA=window.navigator.standalone===true||window.matchMedia('(display-mode: standalone)').matches;
     if(isIOS && isPWA){
-      // PWAモード：BlobURLを生成してSafariで開く
-      const blob=dataURLtoBlob(dataUrl);
-      const blobUrl=URL.createObjectURL(blob);
-      window.location.href=blobUrl;
+      // PWAモード：URLコピー付きの案内を表示
+      showPWAHint();
     } else if(isIOS){
       // Safariブラウザ：新タブで開いて長押し保存
       const w=window.open('');
@@ -721,6 +719,29 @@ function showImagePreview(dataUrl){
 }
 
 
+function showPWAHint(){
+  const url=location.href;
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:400;display:flex;align-items:center;justify-content:center;padding:24px';
+  overlay.innerHTML=`<div style="background:#fff;border-radius:16px;padding:24px;max-width:320px;width:100%;text-align:center">
+    <div style="font-size:36px;margin-bottom:12px">📸</div>
+    <div style="font-size:15px;font-weight:600;color:#374151;margin-bottom:8px">Safariで開いてください</div>
+    <div style="font-size:13px;color:#6b7280;margin-bottom:20px;line-height:1.6">
+      アプリ版では画像保存ができません。<br>SafariでこのURLを開いてから<br>もう一度お試しください。
+    </div>
+    <div style="background:#f3f4f6;border-radius:10px;padding:10px 14px;font-size:12px;color:#374151;margin-bottom:16px;word-break:break-all;text-align:left">${url}</div>
+    <button onclick="navigator.clipboard.writeText('${url}').then(()=>showToast('✓ URLをコピーしました')).catch(()=>showToast('コピーできませんでした','#e24b4a'))"
+      style="width:100%;background:#f472b6;color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:8px">
+      URLをコピー
+    </button>
+    <button onclick="this.closest('div[style*=fixed]').remove()"
+      style="width:100%;background:none;border:1px solid #e5e7eb;border-radius:12px;padding:10px;font-size:14px;color:#6b7280;cursor:pointer">
+      閉じる
+    </button>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
 function dataURLtoBlob(dataUrl){
   const arr=dataUrl.split(',');
   const mime=arr[0].match(/:(.*?);/)[1];
@@ -729,6 +750,29 @@ function dataURLtoBlob(dataUrl){
   const u8=new Uint8Array(n);
   while(n--) u8[n]=bstr.charCodeAt(n);
   return new Blob([u8],{type:mime});
+}
+
+function showPWAHint(){
+  const url=location.href;
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:400;display:flex;align-items:center;justify-content:center;padding:24px';
+  overlay.innerHTML=`<div style="background:#fff;border-radius:16px;padding:24px;max-width:320px;width:100%;text-align:center">
+    <div style="font-size:36px;margin-bottom:12px">📸</div>
+    <div style="font-size:15px;font-weight:600;color:#374151;margin-bottom:8px">Safariで開いてください</div>
+    <div style="font-size:13px;color:#6b7280;margin-bottom:20px;line-height:1.6">
+      アプリ版では画像保存ができません。<br>SafariでこのURLを開いてから<br>もう一度お試しください。
+    </div>
+    <div style="background:#f3f4f6;border-radius:10px;padding:10px 14px;font-size:12px;color:#374151;margin-bottom:16px;word-break:break-all;text-align:left">${url}</div>
+    <button onclick="navigator.clipboard.writeText('${url}').then(()=>showToast('✓ URLをコピーしました')).catch(()=>showToast('コピーできませんでした','#e24b4a'))"
+      style="width:100%;background:#f472b6;color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:8px">
+      URLをコピー
+    </button>
+    <button onclick="this.closest('div[style*=fixed]').remove()"
+      style="width:100%;background:none;border:1px solid #e5e7eb;border-radius:12px;padding:10px;font-size:14px;color:#6b7280;cursor:pointer">
+      閉じる
+    </button>
+  </div>`;
+  document.body.appendChild(overlay);
 }
 
 function dataURLtoBlob(dataUrl){
