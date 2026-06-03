@@ -548,17 +548,25 @@ function setTradeFilter(danId){
   renderTradeList();
 }
 
-// ---- 画像保存（GASプロキシ経由でCORS回避） ----
+// ---- 画像保存（GASプロキシ経由でCORS回避・localStorageキャッシュ付き） ----
 const imgCache={};
+const IMG_CACHE_PREFIX='imgcache_';
 async function imgToBase64(url){
   if(!url) return null;
   if(imgCache[url]) return imgCache[url];
+  // localStorageから取得
+  try{
+    const ls=localStorage.getItem(IMG_CACHE_PREFIX+url);
+    if(ls){imgCache[url]=ls;return ls;}
+  }catch(e){}
   try{
     const res=await fetch(GAS_URL+'?'+new URLSearchParams({action:'proxyImage',url}));
     const data=await res.json();
     if(!data.b64) return null;
     const dataUrl='data:'+data.mime+';base64,'+data.b64;
     imgCache[url]=dataUrl;
+    // localStorageに保存（容量オーバー時は無視）
+    try{localStorage.setItem(IMG_CACHE_PREFIX+url,dataUrl);}catch(e){}
     return dataUrl;
   }catch(e){return null;}
 }
@@ -576,8 +584,11 @@ async function exportTradeImage(){
   document.body.appendChild(overlay);
 
   try{
-    // 全画像を並列取得
-    await Promise.all(trades.map(({item})=>imgToBase64(item.image||'')));
+    // 画像を5件ずつ順番に取得（タイムアウト防止）
+    const imageUrls=[...new Set(trades.map(({item})=>item.image||'').filter(u=>u))];
+    for(let i=0;i<imageUrls.length;i+=5){
+      await Promise.all(imageUrls.slice(i,i+5).map(u=>imgToBase64(u)));
+    }
 
     // Canvas描画（2列グリッド）
     const COLS=2,THUMB=48,PAD=12,GAP=8,CARD_W=172,CARD_H=110,W=376;
