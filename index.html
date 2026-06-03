@@ -148,8 +148,14 @@ function showItem(danId, item) {
   renderItem(item);
 }
 function goBack() {
-  if (screen === 'item') { showDan(currentDan); }
-  else if (screen === 'dan') { showHome(); }
+  if (screen === 'item') {
+    // キャッシュは doAutoSave で更新済みなので再描画だけする
+    const dan = currentDan;
+    screen = 'dan'; currentDan = dan; currentItem = null;
+    setTitle(dan); setBack(true);
+    if (itemsCache[dan]) renderItemList(dan);
+    else renderDan(dan);
+  } else if (screen === 'dan') { showHome(); }
 }
 function reloadCurrent() {
   if (screen === 'home') { dansCache = null; lsDel('dans'); renderHome(); }
