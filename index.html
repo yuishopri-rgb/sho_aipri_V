@@ -609,9 +609,11 @@ async function exportTradeImage(){
     const COLS=2,THUMB=48,PAD=12,GAP=8,CARD_W=172,CARD_H=110,W=376;
     const rows=Math.ceil(trades.length/COLS);
     const H=PAD*2+28+rows*(CARD_H+GAP);
+    alert('step5: canvas生成 W='+W*2+' H='+H*2+' trades='+trades.length);
     const canvas=document.createElement('canvas');
     canvas.width=W*2;canvas.height=H*2;
     const ctx=canvas.getContext('2d');
+    if(!ctx) throw new Error('getContext失敗');
     ctx.scale(2,2);
     ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
     ctx.fillStyle='#7dd9a0';ctx.font='bold 15px sans-serif';
@@ -664,7 +666,9 @@ async function exportTradeImage(){
       }
     }
 
+    alert('step6: toDataURL開始');
     const dataUrl=canvas.toDataURL('image/jpeg',0.92);
+    alert('step7: 完了 length='+dataUrl.length);
     document.getElementById('export-overlay')?.remove();
 
     const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
