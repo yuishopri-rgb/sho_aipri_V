@@ -148,7 +148,13 @@ function showItem(danId, item) {
   editCounts = { アクセ: item.アクセ, トップス: item.トップス, ボトムス: item.ボトムス, シューズ: item.シューズ };
   renderItem(item);
 }
-function goBack() {
+async function goBack() {
+  // 保存待ちタイマーがあれば即座に保存してから遷移
+  if (screen === 'item' && saveTimer) {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    await doAutoSave();
+  }
   if (screen === 'item') { showDan(currentDan); }
   else if (screen === 'dan') { showHome(); }
 }
