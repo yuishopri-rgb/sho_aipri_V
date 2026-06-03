@@ -96,6 +96,8 @@ let currentItem = null;
 let dansCache = null;
 let itemsCache = {};
 let editCounts = {};
+let isSaving = false;
+let savingPromise = null;
 
 // ---- localStorageキャッシュ ----
 function lsSet(key, val) {
@@ -147,9 +149,10 @@ function showItem(danId, item) {
   editCounts = { アクセ: item.アクセ, トップス: item.トップス, ボトムス: item.ボトムス, シューズ: item.シューズ };
   renderItem(item);
 }
-function goBack() {
+async function goBack() {
   if (screen === 'item') {
-    // キャッシュは doAutoSave で更新済みなので再描画だけする
+    // 保存中なら完了を待つ
+    if (isSaving) await savingPromise;
     const dan = currentDan;
     screen = 'dan'; currentDan = dan; currentItem = null;
     setTitle(dan); setBack(true);
@@ -165,14 +168,16 @@ function reloadCurrent() {
 
 // ---- 自動保存（+/-タップで即保存） ----
 function scheduleAutoSave() {
-  doAutoSave();
+  savingPromise = doAutoSave();
 }
 
 async function doAutoSave() {
+  isSaving = true;
   showSaving(true);
   const payload = { action: 'saveItem', dan: currentDan, itemId: currentItem.id, ...editCounts };
   const res = await apiPost(payload).catch(() => null);
   showSaving(false);
+  isSaving = false;
   if (res && res.success) {
     // キャッシュ更新
     const cached = itemsCache[currentDan];
