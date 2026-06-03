@@ -216,20 +216,53 @@ function reloadCurrent(){
   else if(screen==='trade'){showTrade();}
 }
 
-// ---- 自動保存 ----
-function scheduleAutoSave(){savingPromise=doAutoSave()}
-async function doAutoSave(){
-  isSaving=true;showSaving(true);
-  const payload={action:'saveItem',dan:currentDan,itemId:currentItem.id,...editCounts};
+// ---- 自動保存（キュー方式：常に最新値を1回だけ送る） ----
+let saveQueue=null;   // 次に送る予定の内容
+let saveLock=false;   // 通信中フラグ
+let saveTimer=null;
+
+function scheduleAutoSave(){
+  // 最新のeditCountsを予約。通信中でも上書きするので常に最新値になる
+  saveQueue={dan:currentDan,itemId:currentItem.id,...editCounts};
+  if(!saveLock) flushSaveQueue();
+}
+
+async function flushSaveQueue(){
+  if(!saveQueue||saveLock) return;
+  saveLock=true;
+  showSaving(true);
+
+  // 通信開始時点の最新値を取り出す
+  const payload={action:'saveItem',...saveQueue};
+  const snapItem=currentItem ? {...currentItem} : null;
+  const snapDan=currentDan;
+  saveQueue=null; // 取り出したのでクリア
+
   const res=await apiPost(payload).catch(()=>null);
-  showSaving(false);isSaving=false;
+  saveLock=false;
+
   if(res&&res.success){
-    const cached=itemsCache[currentDan];
-    if(cached){const idx=cached.findIndex(i=>i.id===currentItem.id);if(idx>=0){Object.assign(cached[idx],editCounts);lsSet('items_'+currentDan,cached);}}
-    currentItem={...currentItem,...editCounts};
+    // キャッシュ更新
+    const cached=itemsCache[snapDan];
+    if(cached){
+      const idx=cached.findIndex(i=>i.id===payload.itemId);
+      if(idx>=0){
+        Object.assign(cached[idx],{アクセ:payload.アクセ,トップス:payload.トップス,ボトムス:payload.ボトムス,シューズ:payload.シューズ});
+        lsSet('items_'+snapDan,cached);
+      }
+    }
+    if(currentItem&&currentItem.id===payload.itemId){
+      currentItem={...currentItem,アクセ:payload.アクセ,トップス:payload.トップス,ボトムス:payload.ボトムス,シューズ:payload.シューズ};
+    }
     dansCache=null;lsDel('dans');
     showToast('✓ 保存しました');
-  } else {showToast('保存に失敗しました','#e24b4a');}
+  } else {
+    showToast('保存に失敗しました','#e24b4a');
+  }
+
+  // 通信中に新しい変更があればすぐ再送
+  if(saveQueue) flushSaveQueue();
+  else showSaving(false);
 }
 
 function fmtPct(r){return Math.round(r*10)/10}
