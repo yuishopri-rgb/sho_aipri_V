@@ -583,16 +583,8 @@ function exportTradeImage(){
   const trades=tradeFilter==='all'?allTrades:allTrades.filter(t=>t.danId===tradeFilter);
   if(trades.length===0){showToast('交換アイテムがありません','#e24b4a');return;}
 
-  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
-  const isPWA=window.navigator.standalone===true||window.matchMedia('(display-mode: standalone)').matches;
-
-  if(isIOS){
-    // iOSはスクショ用画面を表示
-    showScreenshotView(trades);
-  } else {
-    // PCはhtml2canvasでキャプチャ
-    doHtml2Canvas();
-  }
+  // スクショ用画面を表示（全端末共通）
+  showScreenshotView(trades);
 }
 
 function showScreenshotView(trades){
