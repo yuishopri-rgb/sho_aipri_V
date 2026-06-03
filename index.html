@@ -584,111 +584,30 @@ async function exportTradeImage(){
   const trades=tradeFilter==='all'?allTrades:allTrades.filter(t=>t.danId===tradeFilter);
   if(trades.length===0){showToast('交換アイテムがありません','#e24b4a');return;}
 
-  // ローディング表示
   const overlay=document.createElement('div');
   overlay.id='export-overlay';
   overlay.style.cssText='position:fixed;inset:0;background:rgba(255,255,255,0.88);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px';
-  overlay.innerHTML='<div class="spinner"></div><div style="font-size:14px;color:#f472b6;font-weight:500">画像を生成中...</div>';
+  overlay.innerHTML='<div class="spinner"></div><div style="font-size:14px;color:#7dd9a0;font-weight:500">画像を生成中...</div>';
   document.body.appendChild(overlay);
 
   try{
-    // 画像を10件ずつ順番に取得してimgCacheに確実に格納
-    const imageUrls=[...new Set(trades.map(({item})=>item.image||'').filter(u=>u))];
-    for(let i=0;i<imageUrls.length;i+=10){
-      const batch=imageUrls.slice(i,i+10).filter(u=>!imgCache[u]);
-      if(batch.length===0) continue;
-      try{
-        const res=await fetch(GAS_URL+'?'+new URLSearchParams({action:'proxyImages',urls:JSON.stringify(batch)}));
-        const data=await res.json();
-        Object.entries(data).forEach(([url,val])=>{
-          if(!val) return;
-          imgCache[url]='data:'+val.mime+';base64,'+val.b64;
-        });
-      }catch(e){}
-    }
-
-    // Canvas描画（2列グリッド）
-    const COLS=2,THUMB=48,PAD=12,GAP=8,CARD_W=172,CARD_H=110,W=376;
-    const rows=Math.ceil(trades.length/COLS);
-    const H=PAD*2+28+rows*(CARD_H+GAP);
-    const canvas=document.createElement('canvas');
-    canvas.width=W*2;canvas.height=H*2;
-    const ctx=canvas.getContext('2d');
-    ctx.scale(2,2);
-    ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
-
-    // タイトル
-    ctx.fillStyle='#f472b6';ctx.font='bold 15px sans-serif';
-    ctx.fillText('交換リスト（'+trades.length+'件）',PAD,PAD+15);
-
-    for(let i=0;i<trades.length;i++){
-      const {danId,item,extras}=trades[i];
-      const col=i%COLS;
-      const row=Math.floor(i/COLS);
-      const x=PAD+col*(CARD_W+GAP);
-      const y=PAD+28+row*(CARD_H+GAP);
-
-      // カード背景
-      ctx.fillStyle='#fffbeb';
-      roundRect(ctx,x,y,CARD_W,CARD_H,8);ctx.fill();
-      ctx.strokeStyle='#fde68a';ctx.lineWidth=1;
-      roundRect(ctx,x,y,CARD_W,CARD_H,8);ctx.stroke();
-
-      // サムネイル（左側中央）
-      const b64=imgCache[item.image||''];
-      const ix=x+6,iy=y+(CARD_H-THUMB)/2;
-      ctx.fillStyle='#fdf2f8';
-      roundRect(ctx,ix,iy,THUMB,THUMB,6);ctx.fill();
-      if(b64){
-        try{
-          const img=new Image();
-          img.src=b64;
-          await new Promise(r=>setTimeout(r,50)); // iOSでのロード待ち
-          ctx.drawImage(img,ix,iy,THUMB,THUMB);
-        }catch(e){}
-      }
-
-      // テキスト（右側）
-      const tx=x+6+THUMB+7;
-      const maxW=CARD_W-THUMB-20;
-      ctx.fillStyle='#9ca3af';ctx.font='9px sans-serif';
-      ctx.fillText(danId,tx,y+14);
-      ctx.fillStyle='#374151';ctx.font='bold 11px sans-serif';
-      // 名前を最大幅で折り返し
-      const words=item.name;
-      let line='',ty=y+27;
-      for(const ch of words){
-        if(ctx.measureText(line+ch).width>maxW){
-          ctx.fillText(line,tx,ty);ty+=14;line=ch;
-        } else { line+=ch; }
-      }
-      ctx.fillText(line,tx,ty);
-
-      // パーツチップ（下部）
-      let cx=x+6,cy=y+CARD_H-22;
-      for(const p of extras){
-        const label=p+' +'+(item[p]-1);
-        ctx.font='9px sans-serif';
-        const tw=ctx.measureText(label).width;
-        if(cx+tw+12>x+CARD_W-4){cx=x+6;cy-=16;}
-        ctx.fillStyle='#fef3c7';
-        roundRect(ctx,cx,cy,tw+10,14,4);ctx.fill();
-        ctx.fillStyle='#92400e';
-        ctx.fillText(label,cx+5,cy+10);
-        cx+=tw+14;
-      }
-    }
-
+    const el=document.getElementById('trade-content');
+    const canvas=await html2canvas(el,{
+      backgroundColor:'#fff',
+      scale:2,
+      useCORS:false,
+      allowTaint:true,
+      logging:false,
+      imageTimeout:0,
+    });
     const dataUrl=canvas.toDataURL('image/jpeg',0.92);
     document.getElementById('export-overlay')?.remove();
 
     const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
     const isPWA=window.navigator.standalone===true||window.matchMedia('(display-mode: standalone)').matches;
     if(isIOS && isPWA){
-      // PWAモード：URLコピー付きの案内を表示
       showPWAHint();
     } else if(isIOS){
-      // Safariブラウザ：新タブで開いて長押し保存
       const w=window.open('');
       w.document.write('<html><body style="margin:0;background:#000"><img src="'+dataUrl+'" style="width:100%;display:block"><p style="color:#fff;text-align:center;font-family:sans-serif;padding:12px">長押しして「写真に追加」で保存</p></body></html>');
       w.document.close();
@@ -699,7 +618,7 @@ async function exportTradeImage(){
     }
   } catch(e){
     document.getElementById('export-overlay')?.remove();
-    showToast('生成に失敗しました','#e24b4a');
+    showToast('生成に失敗しました: '+e.message,'#e24b4a');
   }
 }
 
