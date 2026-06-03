@@ -520,7 +520,11 @@ function renderTradeList(){
     ...danIds.map(d=>`<button class="filter-btn ${tradeFilter===d?'active':''}" onclick="setTradeFilter('${d}')">${d}</button>`)
   ].join('');
 
-  const exportBtn=`<button class="trade-export-btn" onclick="exportTradeImage()"><i class="ti ti-download" style="font-size:14px"></i> 画像保存</button>`;
+  const isPWAnow=window.navigator.standalone===true||window.matchMedia('(display-mode: standalone)').matches;
+  const isIOSnow=/iPad|iPhone|iPod/.test(navigator.userAgent);
+  const exportBtn=isPWAnow&&isIOSnow
+    ? `<button class="trade-export-btn" onclick="showPWAHint()"><i class="ti ti-external-link" style="font-size:14px"></i> Safariで開く</button>`
+    : `<button class="trade-export-btn" onclick="exportTradeImage()"><i class="ti ti-download" style="font-size:14px"></i> 画像保存</button>`;
   const header=`<div class="trade-header"><div class="trade-title">交換（${trades.length}件）</div>${exportBtn}</div>`;
   const filters=`<div class="filter-row">${filterBtns}</div>`;
 
@@ -599,9 +603,20 @@ async function exportTradeImage(){
   document.body.appendChild(overlay);
 
   try{
-    // 画像を一括取得（キャッシュ済みはスキップ）
+    // 画像を10件ずつ順番に取得してimgCacheに確実に格納
     const imageUrls=[...new Set(trades.map(({item})=>item.image||'').filter(u=>u))];
-    await fetchImagesBatch(imageUrls);
+    for(let i=0;i<imageUrls.length;i+=10){
+      const batch=imageUrls.slice(i,i+10).filter(u=>!imgCache[u]);
+      if(batch.length===0) continue;
+      try{
+        const res=await fetch(GAS_URL+'?'+new URLSearchParams({action:'proxyImages',urls:JSON.stringify(batch)}));
+        const data=await res.json();
+        Object.entries(data).forEach(([url,val])=>{
+          if(!val) return;
+          imgCache[url]='data:'+val.mime+';base64,'+val.b64;
+        });
+      }catch(e){}
+    }
 
     // Canvas描画（2列グリッド）
     const COLS=2,THUMB=48,PAD=12,GAP=8,CARD_W=172,CARD_H=110,W=376;
@@ -752,28 +767,6 @@ function dataURLtoBlob(dataUrl){
   return new Blob([u8],{type:mime});
 }
 
-function showPWAHint(){
-  const url=location.href;
-  const overlay=document.createElement('div');
-  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:400;display:flex;align-items:center;justify-content:center;padding:24px';
-  overlay.innerHTML=`<div style="background:#fff;border-radius:16px;padding:24px;max-width:320px;width:100%;text-align:center">
-    <div style="font-size:36px;margin-bottom:12px">📸</div>
-    <div style="font-size:15px;font-weight:600;color:#374151;margin-bottom:8px">Safariで開いてください</div>
-    <div style="font-size:13px;color:#6b7280;margin-bottom:20px;line-height:1.6">
-      アプリ版では画像保存ができません。<br>SafariでこのURLを開いてから<br>もう一度お試しください。
-    </div>
-    <div style="background:#f3f4f6;border-radius:10px;padding:10px 14px;font-size:12px;color:#374151;margin-bottom:16px;word-break:break-all;text-align:left">${url}</div>
-    <button onclick="navigator.clipboard.writeText('${url}').then(()=>showToast('✓ URLをコピーしました')).catch(()=>showToast('コピーできませんでした','#e24b4a'))"
-      style="width:100%;background:#f472b6;color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:8px">
-      URLをコピー
-    </button>
-    <button onclick="this.closest('div[style*=fixed]').remove()"
-      style="width:100%;background:none;border:1px solid #e5e7eb;border-radius:12px;padding:10px;font-size:14px;color:#6b7280;cursor:pointer">
-      閉じる
-    </button>
-  </div>`;
-  document.body.appendChild(overlay);
-}
 
 function dataURLtoBlob(dataUrl){
   const arr=dataUrl.split(',');
