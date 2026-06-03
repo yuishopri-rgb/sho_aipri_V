@@ -637,16 +637,15 @@ async function exportTradeImage(){
       // サムネイル（左側中央）
       const b64=imgCache[item.image||''];
       const ix=x+6,iy=y+(CARD_H-THUMB)/2;
+      ctx.fillStyle='#fdf2f8';
+      roundRect(ctx,ix,iy,THUMB,THUMB,6);ctx.fill();
       if(b64){
-        const img=new Image();
-        await new Promise(r=>{img.onload=r;img.onerror=r;img.src=b64;});
-        ctx.save();
-        roundRect(ctx,ix,iy,THUMB,THUMB,6);ctx.clip();
-        ctx.drawImage(img,ix,iy,THUMB,THUMB);
-        ctx.restore();
-      } else {
-        ctx.fillStyle='#fdf2f8';
-        roundRect(ctx,ix,iy,THUMB,THUMB,6);ctx.fill();
+        try{
+          const img=new Image();
+          img.src=b64;
+          await new Promise(r=>setTimeout(r,50)); // iOSでのロード待ち
+          ctx.drawImage(img,ix,iy,THUMB,THUMB);
+        }catch(e){}
       }
 
       // テキスト（右側）
@@ -700,7 +699,6 @@ async function exportTradeImage(){
     }
   } catch(e){
     document.getElementById('export-overlay')?.remove();
-    alert('エラー: '+e.message);
     showToast('生成に失敗しました','#e24b4a');
   }
 }
