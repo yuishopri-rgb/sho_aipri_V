@@ -190,9 +190,8 @@ function showItem(danId,item){
   renderItem(item);
 }
 async function goBack(){
-  if(screen==='imgpreview'){
-    document.getElementById('bottombar').style.display='';
-    showTrade();
+  if(screenshotMode){
+    exportTradeImage();
     return;
   }
   if(screen==='item'){
@@ -522,8 +521,7 @@ function renderTradeList(){
   const isPWAnow=window.navigator.standalone===true||window.matchMedia('(display-mode: standalone)').matches;
   const isIOSnow=/iPad|iPhone|iPod/.test(navigator.userAgent);
   const exportBtn=isIOSnow
-    ? `<button class="trade-export-btn" onclick="exportTradeImage()"><i class="ti ti-camera" style="font-size:14px"></i> スクショ用画面</button>`
-    : `<button class="trade-export-btn" onclick="exportTradeImage()"><i class="ti ti-download" style="font-size:14px"></i> 画像保存</button>`;
+    `<button class="trade-export-btn" onclick="exportTradeImage()"><i class="ti ti-download" style="font-size:14px"></i> 画像保存</button>`;
   const header=`<div class="trade-header"><div class="trade-title">交換（${trades.length}件）</div>${exportBtn}</div>`;
   const filters=`<div class="filter-row">${filterBtns}</div>`;
 
@@ -543,7 +541,7 @@ function renderTradeList(){
         </div>`;
       }).join('');
 
-  setContent(`<div id="trade-content">${header}${filters}${rows}</div>`);
+  setContent(`<div id="trade-content"><div id="screenshot-hint" style="display:none;background:#fef3c7;border-radius:12px;padding:12px;margin-bottom:12px;text-align:center;font-size:13px;color:#92400e;position:sticky;top:0;z-index:10">📸 スクショして保存 → もう一度タップで戻る</div>${header}${filters}${rows}</div>`);
 }
 
 function setTradeFilter(danId){
@@ -578,59 +576,118 @@ async function imgToBase64(url){
   return imgCache[url]||null;
 }
 
-function exportTradeImage(){
+async function exportTradeImage(){
   const allTrades=getTradeItems();
   const trades=tradeFilter==='all'?allTrades:allTrades.filter(t=>t.danId===tradeFilter);
   if(trades.length===0){showToast('交換アイテムがありません','#e24b4a');return;}
-  showScreenshotView(trades);
-}
 
-function showScreenshotView(trades){
-  screen='imgpreview';
-  setTitle('スクショして保存');
-  setBack(true);
-  document.getElementById('search-bar').style.display='none';
-  document.getElementById('bottombar').style.display='none';
-
-  const rows=trades.map(({danId,item,extras})=>{
-    const chips=extras.map(p=>`<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:500">${p} +${item[p]-1}</span>`).join('');
-    return `<div style="display:flex;align-items:center;gap:10px;padding:10px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;margin-bottom:8px">
-      <img src="${item.image||''}" style="width:56px;height:56px;border-radius:8px;object-fit:cover;flex-shrink:0" onerror="this.style.background='#fdf2f8'">
-      <div style="flex:1;min-width:0">
-        <div style="font-size:11px;color:#9ca3af;margin-bottom:2px">${danId}</div>
-        <div style="font-size:13px;font-weight:500;color:#374151;margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.name}</div>
-        <div style="display:flex;gap:5px;flex-wrap:wrap">${chips}</div>
-      </div>
-    </div>`;
-  }).join('');
-
-  // setContentで完全に置き換え
-  setContent(`<div style="background:#fef3c7;border-radius:12px;padding:12px;margin-bottom:12px;text-align:center;font-size:13px;color:#92400e">
-      📸 この画面をスクショして保存してください
-    </div>
-    <div style="font-size:15px;font-weight:600;color:#374151;margin-bottom:10px">交換リスト（${trades.length}件）</div>
-    ${rows}`);
-}
-
-async function doHtml2Canvas(){
   const overlay=document.createElement('div');
   overlay.id='export-overlay';
   overlay.style.cssText='position:fixed;inset:0;background:rgba(255,255,255,0.88);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px';
   overlay.innerHTML='<div class="spinner"></div><div style="font-size:14px;color:#7dd9a0;font-weight:500">画像を生成中...</div>';
   document.body.appendChild(overlay);
+
   try{
-    const el=document.getElementById('trade-content');
-    const canvas=await html2canvas(el,{backgroundColor:'#fff',scale:2,useCORS:false,allowTaint:true,logging:false});
+    // 全画像URLを収集
+    const imageUrls=[...new Set(trades.map(({item})=>item.image||'').filter(u=>u))];
+    
+    // GASから全画像を一括取得
+    const res=await fetch(GAS_URL+'?'+new URLSearchParams({action:'proxyImages',urls:JSON.stringify(imageUrls)}));
+    const imgData=await res.json();
+    
+    // Base64をImageオブジェクトに変換（事前ロード）
+    const imgMap={};
+    await Promise.all(Object.entries(imgData).map(([url,val])=>{
+      if(!val||!val.b64) return Promise.resolve();
+      return new Promise(resolve=>{
+        const img=new Image();
+        img.onload=()=>{imgMap[url]=img;resolve();};
+        img.onerror=()=>resolve();
+        img.src='data:'+val.mime+';base64,'+val.b64;
+      });
+    }));
+
+    // Canvas描画（2列グリッド・clipなし）
+    const COLS=2,THUMB=48,PAD=12,GAP=8,CARD_W=172,CARD_H=110,W=376;
+    const rows=Math.ceil(trades.length/COLS);
+    const H=PAD*2+28+rows*(CARD_H+GAP);
+    const canvas=document.createElement('canvas');
+    canvas.width=W*2;canvas.height=H*2;
+    const ctx=canvas.getContext('2d');
+    ctx.scale(2,2);
+    ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#7dd9a0';ctx.font='bold 15px sans-serif';
+    ctx.fillText('交換リスト（'+trades.length+'件）',PAD,PAD+15);
+
+    for(let i=0;i<trades.length;i++){
+      const {danId,item,extras}=trades[i];
+      const col=i%COLS;
+      const row=Math.floor(i/COLS);
+      const x=PAD+col*(CARD_W+GAP);
+      const y=PAD+28+row*(CARD_H+GAP);
+
+      ctx.fillStyle='#fffbeb';
+      roundRect(ctx,x,y,CARD_W,CARD_H,8);ctx.fill();
+      ctx.strokeStyle='#fde68a';ctx.lineWidth=1;
+      roundRect(ctx,x,y,CARD_W,CARD_H,8);ctx.stroke();
+
+      // サムネイル（clipなしでそのまま描画）
+      const ix=x+6,iy=y+(CARD_H-THUMB)/2;
+      ctx.fillStyle='#fdf2f8';
+      roundRect(ctx,ix,iy,THUMB,THUMB,6);ctx.fill();
+      const img=imgMap[item.image||''];
+      if(img) ctx.drawImage(img,ix,iy,THUMB,THUMB);
+
+      // テキスト
+      const tx=x+6+THUMB+7;
+      const maxW=CARD_W-THUMB-20;
+      ctx.fillStyle='#9ca3af';ctx.font='9px sans-serif';
+      ctx.fillText(danId,tx,y+14);
+      ctx.fillStyle='#374151';ctx.font='bold 11px sans-serif';
+      let line='',ty=y+27;
+      for(const ch of item.name){
+        if(ctx.measureText(line+ch).width>maxW){ctx.fillText(line,tx,ty);ty+=14;line=ch;}
+        else{line+=ch;}
+      }
+      ctx.fillText(line,tx,ty);
+
+      // チップ
+      let cx=x+6,cy=y+CARD_H-22;
+      for(const p of extras){
+        const label=p+' +'+(item[p]-1);
+        ctx.font='9px sans-serif';
+        const tw=ctx.measureText(label).width;
+        if(cx+tw+12>x+CARD_W-4){cx=x+6;cy-=16;}
+        ctx.fillStyle='#fef3c7';
+        roundRect(ctx,cx,cy,tw+10,14,4);ctx.fill();
+        ctx.fillStyle='#92400e';
+        ctx.fillText(label,cx+5,cy+10);
+        cx+=tw+14;
+      }
+    }
+
     const dataUrl=canvas.toDataURL('image/jpeg',0.92);
     document.getElementById('export-overlay')?.remove();
-    const a=document.createElement('a');
-    a.download='交換リスト.jpg';a.href=dataUrl;a.click();
-    showToast('✓ 画像を保存しました');
-  }catch(e){
+
+    const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isPWA=window.navigator.standalone===true||window.matchMedia('(display-mode: standalone)').matches;
+    if(isIOS&&isPWA){
+      showPWAHint();
+    } else if(isIOS){
+      const w=window.open('');
+      w.document.write('<html><body style="margin:0;background:#000"><img src="'+dataUrl+'" style="width:100%;display:block"><p style="color:#fff;text-align:center;font-family:sans-serif;padding:12px">長押しして「写真に追加」で保存</p></body></html>');
+      w.document.close();
+    } else {
+      const a=document.createElement('a');
+      a.download='交換リスト.jpg';a.href=dataUrl;a.click();
+      showToast('✓ 画像を保存しました');
+    }
+  } catch(e){
     document.getElementById('export-overlay')?.remove();
-    showToast('生成に失敗しました','#e24b4a');
+    showToast('生成に失敗: '+e.message,'#e24b4a');
   }
 }
+
 
 function showImagePreview(dataUrl){
   screen='imgpreview';
