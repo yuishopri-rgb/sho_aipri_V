@@ -18,7 +18,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 .topbar .t-back{background:none;border:none;color:#fff;cursor:pointer;padding:4px;font-size:20px;line-height:1;display:flex}
 .topbar .t-title{font-size:16px;font-weight:500;flex:1}
 .topbar .t-icon{background:none;border:none;color:#fff;cursor:pointer;padding:4px;font-size:20px;line-height:1;display:flex}
-.content{flex:1;overflow-y:auto;padding:12px;padding-bottom:72px}
+.content{flex:1;overflow-y:auto;padding:12px;padding-bottom:72px;padding-top:8px}
 .bottombar{background:#fff;border-top:1px solid #f9a8d4;padding:8px 0 12px;display:flex;justify-content:space-around;position:sticky;bottom:0}
 .bottombar button{background:none;border:none;cursor:pointer;color:#9ca3af;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:0 16px}
 .bottombar button i{font-size:22px}
@@ -33,7 +33,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 .updating-bar.show{display:block}
 .saving-bar{background:#d1fae5;color:#065f46;font-size:11px;text-align:center;padding:4px;display:none}
 .saving-bar.show{display:block}
-.search-wrap{padding:0 0 10px}
+.search-bar{background:#fff;border-bottom:1px solid #f9a8d4;padding:8px 12px;position:sticky;top:52px;z-index:90}
 .search-box{position:relative}
 .search-box i{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#f9a8d4;font-size:16px;pointer-events:none}
 .search-input{width:100%;padding:9px 12px 9px 34px;border:1px solid #f9a8d4;border-radius:20px;font-size:14px;background:#fdf2f8;outline:none}
@@ -105,6 +105,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
     <span class="t-title" id="topbar-title">アイプリ管理</span>
     <button class="t-icon" onclick="reloadCurrent()"><i class="ti ti-refresh"></i></button>
   </div>
+  <div class="search-bar" id="search-bar" style="display:none">
+    <div class="search-box">
+      <i class="ti ti-search"></i>
+      <input id="global-search" class="search-input" type="search" placeholder="アイテムを検索...">
+    </div>
+  </div>
   <div class="updating-bar" id="updating-bar">🔄 最新データを取得中...</div>
   <div class="saving-bar" id="saving-bar">💾 保存中...</div>
   <div class="content" id="content"></div>
@@ -164,6 +170,9 @@ async function apiPost(b){const r=await fetch(GAS_URL,{method:'POST',body:JSON.s
 // ---- ナビ ----
 function showHome(){
   screen='home';currentDan=null;currentItem=null;
+  homeSearchQuery='';
+  const inp=document.getElementById('global-search');
+  if(inp) inp.placeholder='アイテムを検索...';
   setActiveTab('home');renderHome();
 }
 function showDan(danId){
@@ -220,22 +229,21 @@ function renderHome(){
   const allItems=getAllItems();
   const q=normalize(homeSearchQuery);
   // 検索バー
-  const searchBar=`<div class="search-wrap">
-    <div class="search-box">
-      <i class="ti ti-search"></i>
-      <input id="home-search" class="search-input" type="search" placeholder="全アイテムを検索..." value="${homeSearchQuery}">
-    </div>
-  </div>`;
+  // 固定検索バーを表示してバインド
+  const sb=document.getElementById('search-bar');
+  sb.style.display='';
+  const inp=document.getElementById('global-search');
+  inp.value=homeSearchQuery;
+  inp.oninput=e=>{homeSearchQuery=e.target.value;renderHomeSearch();};
 
   if(q && allItems.length>0){
-    // 検索結果表示
     const filtered=allItems.filter(({item})=>normalize(item.name).includes(q)||normalize(item.id).includes(q));
     const rows=filtered.length===0
       ? '<div class="trade-empty">該当するアイテムがありません</div>'
       : filtered.map(({danId,item})=>itemRowHTML(danId,item,true)).join('');
-    setContent(searchBar+`<div class="item-list">${rows}</div>`);
+    setContent(`<div class="item-list">${rows}</div>`);
   } else if(!dansCache){
-    setContent(searchBar+'<div class="loading"><div class="spinner"></div><span>読み込み中...</span></div>');
+    setContent('<div class="loading"><div class="spinner"></div><span>読み込み中...</span></div>');
     loadDans();
     return;
   } else {
@@ -250,13 +258,7 @@ function renderHome(){
         </div>
       </div>`;
     }).join('');
-    setContent(searchBar+`<div class="dan-grid">${cards}</div>`);
-  }
-  // イベントをDOMに直接バインド（再レンダーしない）
-  const inp=document.getElementById('home-search');
-  if(inp){
-    inp.addEventListener('input',e=>{homeSearchQuery=e.target.value;renderHomeSearch();});
-    inp.focus && inp.focus();
+    setContent(`<div class="dan-grid">${cards}</div>`);
   }
 }
 
@@ -265,8 +267,6 @@ function renderHomeSearch(){
   const allItems=getAllItems();
   const list=document.querySelector('.item-list')||document.querySelector('.dan-grid');
   const container=document.getElementById('content');
-  // 検索バーを残してリストだけ更新
-  const searchWrap=container.querySelector('.search-wrap');
   if(q){
     const filtered=allItems.filter(({item})=>normalize(item.name).includes(q)||normalize(item.id).includes(q));
     const rows=filtered.length===0
@@ -350,29 +350,25 @@ function itemRowHTML(danId,item,showDanLabel=false){
 function renderItemList(danId){
   const q=normalize(danSearchQuery);
   const items=(itemsCache[danId]||[]).filter(item=>!q||normalize(item.name).includes(q)||normalize(item.id).includes(q));
-  const searchBar=`<div class="search-wrap">
-    <div class="search-box">
-      <i class="ti ti-search"></i>
-      <input id="dan-search" class="search-input" type="search" placeholder="この弾を検索..." value="${danSearchQuery}">
-    </div>
-  </div>`;
+  // 固定検索バーをDAN用に切り替え
+  const sb=document.getElementById('search-bar');
+  sb.style.display='';
+  const inp=document.getElementById('global-search');
+  inp.value=danSearchQuery;
+  inp.placeholder='この弾を検索...';
+  inp.oninput=e=>{
+    danSearchQuery=e.target.value;
+    const q2=normalize(danSearchQuery);
+    const items2=(itemsCache[danId]||[]).filter(item=>!q2||normalize(item.name).includes(q2)||normalize(item.id).includes(q2));
+    const list=document.querySelector('.item-list');
+    if(list) list.innerHTML=items2.length===0
+      ? '<div class="trade-empty">該当するアイテムがありません</div>'
+      : items2.map(item=>itemRowHTML(danId,item,false)).join('');
+  };
   const rows=items.length===0
     ? '<div class="trade-empty">該当するアイテムがありません</div>'
     : items.map(item=>itemRowHTML(danId,item,false)).join('');
-  document.getElementById('content').innerHTML=searchBar+`<div class="item-list">${rows}</div>`;
-  const inp=document.getElementById('dan-search');
-  if(inp){
-    inp.addEventListener('input',e=>{
-      danSearchQuery=e.target.value;
-      // リストだけ更新
-      const q2=normalize(danSearchQuery);
-      const items2=(itemsCache[danId]||[]).filter(item=>!q2||normalize(item.name).includes(q2)||normalize(item.id).includes(q2));
-      const list=document.querySelector('.item-list');
-      if(list) list.innerHTML=items2.length===0
-        ? '<div class="trade-empty">該当するアイテムがありません</div>'
-        : items2.map(item=>itemRowHTML(danId,item,false)).join('');
-    });
-  }
+  document.getElementById('content').innerHTML=`<div class="item-list">${rows}</div>`;
 }
 
 async function renderDan(danId){
@@ -414,6 +410,7 @@ function openItem(danId,itemId){
 // ---- ITEM DETAIL ----
 function renderItem(item){
   setTitle(currentDan);setBack(true);
+  document.getElementById('search-bar').style.display='none';
   const partRows=PARTS.map(p=>`
     <div class="part-row">
       <div class="part-label">${p}<span>*</span></div>
@@ -451,6 +448,7 @@ function getTradeItems(){
 async function showTrade(){
   screen='trade';currentDan=null;currentItem=null;
   setTitle('交換リスト');setBack(false);setActiveTab('trade');
+  document.getElementById('search-bar').style.display='none';
   // 未読み込みの弾を全部読み込む
   if(dansCache){
     const missing=dansCache.filter(d=>!itemsCache[d.id]);
@@ -586,17 +584,17 @@ async function exportTradeImage(){
   }
 
   const dataUrl=canvas.toDataURL('image/jpeg',0.9);
-  // iPhoneはaタグdl不可 → モーダルで長押し保存案内
   const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
   if(isIOS){
-    const overlay=document.createElement('div');
-    overlay.className='modal-overlay';
-    overlay.innerHTML=`<div class="modal-box">
-      <img src="${dataUrl}" alt="交換リスト">
-      <p>画像を長押しして「写真に追加」で保存してください</p>
-      <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">閉じる</button>
-    </div>`;
-    document.body.appendChild(overlay);
+    // iPhoneは新しいタブで画像を開く → 長押し or 共有で保存
+    const w=window.open('','_blank');
+    w.document.write(`<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>交換リスト</title>
+    <style>body{margin:0;background:#111;display:flex;flex-direction:column;align-items:center;padding:16px;}
+    img{max-width:100%;border-radius:8px;}
+    p{color:#fff;font-size:13px;margin-top:12px;text-align:center;line-height:1.6;}</style></head>
+    <body><img src="${dataUrl}"><p>画像を長押し →「写真に追加」で保存<br>または右上の共有ボタンから保存</p></body></html>`);
+    w.document.close();
   } else {
     const a=document.createElement('a');
     a.download='交換リスト.jpg';a.href=dataUrl;a.click();
