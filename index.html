@@ -190,10 +190,6 @@ function showItem(danId,item){
   renderItem(item);
 }
 async function goBack(){
-  if(screenshotMode){
-    exportTradeImage();
-    return;
-  }
   if(screen==='item'){
     if(isSaving) await savingPromise;
     const dan=currentDan;
