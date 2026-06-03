@@ -548,27 +548,43 @@ function setTradeFilter(danId){
   renderTradeList();
 }
 
-// ---- 画像保存（GASプロキシ経由でCORS回避・localStorageキャッシュ付き） ----
+// ---- 画像保存（GASプロキシ経由でCORS回避・localStorage+一括取得） ----
 const imgCache={};
 const IMG_CACHE_PREFIX='imgcache_';
+
+async function fetchImagesBatch(urls){
+  // キャッシュにないURLだけ取得
+  const missing=urls.filter(u=>u&&!imgCache[u]&&!localStorage.getItem(IMG_CACHE_PREFIX+u));
+  if(missing.length>0){
+    try{
+      // 20件ずつ一括取得
+      for(let i=0;i<missing.length;i+=20){
+        const batch=missing.slice(i,i+20);
+        const res=await fetch(GAS_URL+'?'+new URLSearchParams({action:'proxyImages',urls:JSON.stringify(batch)}));
+        const data=await res.json();
+        Object.entries(data).forEach(([url,val])=>{
+          if(!val) return;
+          const dataUrl='data:'+val.mime+';base64,'+val.b64;
+          imgCache[url]=dataUrl;
+          try{localStorage.setItem(IMG_CACHE_PREFIX+url,dataUrl);}catch(e){}
+        });
+      }
+    }catch(e){}
+  }
+  // localStorageからも読み込み
+  urls.forEach(u=>{
+    if(u&&!imgCache[u]){
+      try{const ls=localStorage.getItem(IMG_CACHE_PREFIX+u);if(ls)imgCache[u]=ls;}catch(e){}
+    }
+  });
+}
+
 async function imgToBase64(url){
   if(!url) return null;
   if(imgCache[url]) return imgCache[url];
-  // localStorageから取得
-  try{
-    const ls=localStorage.getItem(IMG_CACHE_PREFIX+url);
-    if(ls){imgCache[url]=ls;return ls;}
-  }catch(e){}
-  try{
-    const res=await fetch(GAS_URL+'?'+new URLSearchParams({action:'proxyImage',url}));
-    const data=await res.json();
-    if(!data.b64) return null;
-    const dataUrl='data:'+data.mime+';base64,'+data.b64;
-    imgCache[url]=dataUrl;
-    // localStorageに保存（容量オーバー時は無視）
-    try{localStorage.setItem(IMG_CACHE_PREFIX+url,dataUrl);}catch(e){}
-    return dataUrl;
-  }catch(e){return null;}
+  try{const ls=localStorage.getItem(IMG_CACHE_PREFIX+url);if(ls){imgCache[url]=ls;return ls;}}catch(e){}
+  await fetchImagesBatch([url]);
+  return imgCache[url]||null;
 }
 
 async function exportTradeImage(){
@@ -584,11 +600,9 @@ async function exportTradeImage(){
   document.body.appendChild(overlay);
 
   try{
-    // 画像を5件ずつ順番に取得（タイムアウト防止）
+    // 画像を一括取得（キャッシュ済みはスキップ）
     const imageUrls=[...new Set(trades.map(({item})=>item.image||'').filter(u=>u))];
-    for(let i=0;i<imageUrls.length;i+=5){
-      await Promise.all(imageUrls.slice(i,i+5).map(u=>imgToBase64(u)));
-    }
+    await fetchImagesBatch(imageUrls);
 
     // Canvas描画（2列グリッド）
     const COLS=2,THUMB=48,PAD=12,GAP=8,CARD_W=172,CARD_H=110,W=376;
