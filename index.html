@@ -506,20 +506,19 @@ function setTradeFilter(danId){
   renderTradeList();
 }
 
-// ---- 画像保存（iPhone対応：Canvas手描き） ----
+// ---- 画像保存（GASプロキシ経由でCORS回避） ----
+const imgCache={};
 async function imgToBase64(url){
-  return new Promise(resolve=>{
-    const img=new Image();
-    img.crossOrigin='anonymous';
-    img.onload=()=>{
-      const c=document.createElement('canvas');
-      c.width=img.width;c.height=img.height;
-      c.getContext('2d').drawImage(img,0,0);
-      try{resolve(c.toDataURL('image/jpeg',0.8));}catch(e){resolve(null);}
-    };
-    img.onerror=()=>resolve(null);
-    img.src=url+'?t='+Date.now();
-  });
+  if(!url) return null;
+  if(imgCache[url]) return imgCache[url];
+  try{
+    const res=await fetch(GAS_URL+'?'+new URLSearchParams({action:'proxyImage',url}));
+    const data=await res.json();
+    if(!data.b64) return null;
+    const dataUrl='data:'+data.mime+';base64,'+data.b64;
+    imgCache[url]=dataUrl;
+    return dataUrl;
+  }catch(e){return null;}
 }
 
 async function exportTradeImage(){
