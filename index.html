@@ -10,11 +10,10 @@
 <link rel="manifest" href="manifest.json">
 <title>アイプリ所持数管理</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:#fdf2f8;overscroll-behavior:none}
-.app{max-width:480px;margin:0 auto;background:#fff;min-height:100dvh;display:flex;flex-direction:column;position:relative}
+.app{max-width:480px;margin:0 auto;background:#fff;min-height:100dvh;display:flex;flex-direction:column}
 .topbar{background:#f472b6;padding:12px 16px;display:flex;align-items:center;gap:10px;color:#fff;position:sticky;top:0;z-index:100;min-height:52px}
 .topbar .t-back{background:none;border:none;color:#fff;cursor:pointer;padding:4px;font-size:20px;line-height:1;display:flex}
 .topbar .t-title{font-size:16px;font-weight:500;flex:1}
@@ -34,12 +33,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 .updating-bar.show{display:block}
 .saving-bar{background:#d1fae5;color:#065f46;font-size:11px;text-align:center;padding:4px;display:none}
 .saving-bar.show{display:block}
-/* 検索バー */
-.search-wrap{padding:8px 12px;background:#fff;border-bottom:0.5px solid #f9a8d4}
-.search-input{width:100%;padding:8px 12px 8px 36px;border:1px solid #f9a8d4;border-radius:20px;font-size:14px;background:#fdf2f8;position:relative}
+.search-wrap{padding:0 0 10px}
 .search-box{position:relative}
 .search-box i{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#f9a8d4;font-size:16px;pointer-events:none}
-/* 弾グリッド */
+.search-input{width:100%;padding:9px 12px 9px 34px;border:1px solid #f9a8d4;border-radius:20px;font-size:14px;background:#fdf2f8;outline:none}
+.search-input:focus{border-color:#f472b6}
 .dan-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .dan-card{background:#fff;border:1px solid #f9a8d4;border-radius:16px;overflow:hidden;cursor:pointer}
 .dan-card:active{background:#fce7f3}
@@ -49,8 +47,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 .dan-name{font-size:13px;font-weight:600;color:#374151}
 .dan-meta{font-size:12px;color:#9ca3af;margin-top:2px}
 .pct-bar{height:4px;background:#fce7f3;border-radius:2px;margin-top:6px}
-.pct-fill{height:100%;background:#f472b6;border-radius:2px;transition:width 0.4s}
-/* アイテムリスト */
+.pct-fill{height:100%;background:#f472b6;border-radius:2px}
 .item-list{display:flex;flex-direction:column;gap:8px}
 .item-row{display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border:1px solid #f9a8d4;border-radius:14px;cursor:pointer}
 .item-row:active{background:#fdf2f8}
@@ -67,7 +64,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 .part-chip.zero{background:#fce7f3;color:#be185d}
 .part-chip.has{background:#d1fae5;color:#065f46}
 .part-chip.extra{background:#fef3c7;color:#92400e}
-/* 詳細 */
 .detail-header{display:flex;flex-direction:column;align-items:center;margin-bottom:20px}
 .detail-img{width:160px;height:160px;object-fit:cover;border-radius:16px;border:2px solid #f9a8d4;display:block}
 .detail-name{font-size:15px;font-weight:600;color:#f472b6;margin-top:12px;text-align:center;display:flex;align-items:center;gap:6px}
@@ -78,24 +74,33 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 .cnt-btn{width:32px;height:32px;border-radius:50%;border:1px solid #f9a8d4;background:#fff;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:#f472b6;flex-shrink:0}
 .cnt-btn:active{background:#fce7f3}
 .cnt-val{flex:1;text-align:center;font-size:18px;font-weight:600;color:#374151}
-/* 交換リスト */
-.trade-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;overflow-x:auto;padding-bottom:2px}
+.filter-btn{background:#fdf2f8;border:1px solid #f9a8d4;border-radius:20px;padding:4px 12px;font-size:12px;cursor:pointer;white-space:nowrap;color:#374151}
+.filter-btn.active{background:#f472b6;color:#fff;border-color:#f472b6}
+.trade-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .trade-title{font-size:15px;font-weight:600;color:#374151}
 .trade-export-btn{background:#f472b6;color:#fff;border:none;border-radius:20px;padding:6px 14px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px}
 .trade-empty{text-align:center;color:#9ca3af;padding:40px 0;font-size:14px}
-.trade-item{display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border:1px solid #fde68a;border-radius:14px;margin-bottom:8px}
+.trade-item{display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border:1px solid #fde68a;border-radius:14px;margin-bottom:8px;cursor:pointer}
+.trade-item:active{background:#fffbeb}
 .trade-thumb{width:56px;height:56px;border-radius:10px;background:#fdf2f8;overflow:hidden;flex-shrink:0}
 .trade-thumb img{width:100%;height:100%;object-fit:cover}
 .trade-info{flex:1;min-width:0}
-.trade-name{font-size:13px;font-weight:500;color:#374151;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trade-name{font-size:13px;font-weight:500;color:#374151;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .trade-dan{font-size:11px;color:#9ca3af;margin-bottom:4px}
 .trade-parts{display:flex;gap:4px;flex-wrap:wrap}
 .trade-chip{padding:2px 7px;border-radius:10px;font-size:11px;font-weight:500;background:#fef3c7;color:#92400e}
+/* 画像保存モーダル */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:center;justify-content:center}
+.modal-box{background:#fff;border-radius:16px;padding:20px;max-width:320px;width:90%;text-align:center}
+.modal-box img{width:100%;border-radius:8px;margin-bottom:12px}
+.modal-box p{font-size:13px;color:#6b7280;margin-bottom:16px}
+.modal-close{background:#f472b6;color:#fff;border:none;border-radius:20px;padding:10px 24px;font-size:14px;cursor:pointer}
 </style>
 </head>
 <body>
 <div class="app" id="app-root">
-  <div class="topbar" id="topbar">
+  <div class="topbar">
     <button class="t-back" id="btn-back" style="display:none" onclick="goBack()"><i class="ti ti-arrow-left"></i></button>
     <span class="t-title" id="topbar-title">アイプリ管理</span>
     <button class="t-icon" onclick="reloadCurrent()"><i class="ti ti-refresh"></i></button>
@@ -103,7 +108,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
   <div class="updating-bar" id="updating-bar">🔄 最新データを取得中...</div>
   <div class="saving-bar" id="saving-bar">💾 保存中...</div>
   <div class="content" id="content"></div>
-  <div class="bottombar" id="bottombar">
+  <div class="bottombar">
     <button id="tab-home" class="active" onclick="showHome()"><i class="ti ti-home"></i>ホーム</button>
     <button id="tab-trade" onclick="showTrade()"><i class="ti ti-arrows-exchange"></i>交換リスト</button>
   </div>
@@ -123,219 +128,293 @@ let itemsCache = {};
 let editCounts = {};
 let isSaving = false;
 let savingPromise = null;
-let searchQuery = '';
+let danSearchQuery = '';   // 弾リスト内検索
+let homeSearchQuery = '';  // ホーム全検索
+let tradeFilter = 'all';   // 交換リストの弾フィルター
 
-// ---- カナ/ひらがな正規化 ----
 function normalize(str) {
-  return str
-    .replace(/[\u30A1-\u30F6]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60))
-    .toLowerCase();
+  return (str||'').replace(/[\u30A1-\u30F6]/g, c => String.fromCharCode(c.charCodeAt(0)-0x60)).toLowerCase();
 }
 
-// ---- localStorageキャッシュ ----
-function lsSet(key, val) {
-  try { localStorage.setItem(key, JSON.stringify({ t: Date.now(), v: val })); } catch(e) {}
-}
-function lsGet(key) {
-  try {
-    const d = JSON.parse(localStorage.getItem(key));
-    if (d && Date.now() - d.t < CACHE_TTL) return d.v;
-  } catch(e) {}
-  return null;
-}
-function lsDel(key) { try { localStorage.removeItem(key); } catch(e) {} }
+// ---- localStorage ----
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify({t:Date.now(),v}))}catch(e){}}
+function lsGet(k){try{const d=JSON.parse(localStorage.getItem(k));if(d&&Date.now()-d.t<CACHE_TTL)return d.v}catch(e){}return null}
+function lsDel(k){try{localStorage.removeItem(k)}catch(e){}}
 
-// ---- UI helpers ----
-function setTitle(t) { document.getElementById('topbar-title').textContent = t; }
-function setBack(show) { document.getElementById('btn-back').style.display = show ? '' : 'none'; }
-function setContent(html) { document.getElementById('content').innerHTML = html; }
-function showUpdating(show) { document.getElementById('updating-bar').classList.toggle('show', show); }
-function showSaving(show) { document.getElementById('saving-bar').classList.toggle('show', show); }
-function showToast(msg, color='#1D9E75') {
-  const el = document.getElementById('toast');
-  el.textContent = msg; el.style.background = color;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2000);
+// ---- UI ----
+function setTitle(t){document.getElementById('topbar-title').textContent=t}
+function setBack(show){document.getElementById('btn-back').style.display=show?'':'none'}
+function setContent(html){document.getElementById('content').innerHTML=html}
+function showUpdating(show){document.getElementById('updating-bar').classList.toggle('show',show)}
+function showSaving(show){document.getElementById('saving-bar').classList.toggle('show',show)}
+function showToast(msg,color='#1D9E75'){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.style.background=color;
+  el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);
 }
-function setActiveTab(tab) {
-  document.getElementById('tab-home').classList.toggle('active', tab === 'home');
-  document.getElementById('tab-trade').classList.toggle('active', tab === 'trade');
+function setActiveTab(tab){
+  document.getElementById('tab-home').classList.toggle('active',tab==='home');
+  document.getElementById('tab-trade').classList.toggle('active',tab==='trade');
 }
 
 // ---- API ----
-async function apiGet(params) {
-  const res = await fetch(GAS_URL + '?' + new URLSearchParams(params));
-  return res.json();
-}
-async function apiPost(body) {
-  const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(body) });
-  return res.json();
-}
+async function apiGet(p){const r=await fetch(GAS_URL+'?'+new URLSearchParams(p));return r.json()}
+async function apiPost(b){const r=await fetch(GAS_URL,{method:'POST',body:JSON.stringify(b)});return r.json()}
 
 // ---- ナビ ----
-function showHome() {
-  screen = 'home'; currentDan = null; currentItem = null; searchQuery = '';
-  setActiveTab('home');
-  renderHome();
+function showHome(){
+  screen='home';currentDan=null;currentItem=null;
+  setActiveTab('home');renderHome();
 }
-function showDan(danId) {
-  screen = 'dan'; currentDan = danId; currentItem = null; searchQuery = '';
+function showDan(danId){
+  screen='dan';currentDan=danId;currentItem=null;danSearchQuery='';
   renderDan(danId);
 }
-function showItem(danId, item) {
-  screen = 'item'; currentDan = danId; currentItem = item;
-  editCounts = { アクセ: item.アクセ, トップス: item.トップス, ボトムス: item.ボトムス, シューズ: item.シューズ };
+function showItem(danId,item){
+  screen='item';currentDan=danId;currentItem=item;
+  editCounts={アクセ:item.アクセ,トップス:item.トップス,ボトムス:item.ボトムス,シューズ:item.シューズ};
   renderItem(item);
 }
-async function goBack() {
-  if (screen === 'item') {
-    if (isSaving) await savingPromise;
-    const dan = currentDan;
-    screen = 'dan'; currentDan = dan; currentItem = null;
-    setTitle(dan); setBack(true);
-    if (itemsCache[dan]) renderItemList(dan);
+async function goBack(){
+  if(screen==='item'){
+    if(isSaving) await savingPromise;
+    const dan=currentDan;
+    screen='dan';currentDan=dan;currentItem=null;
+    setTitle(dan);setBack(true);
+    if(itemsCache[dan]) renderItemList(dan);
     else renderDan(dan);
-  } else if (screen === 'dan') {
+  } else if(screen==='dan'){
     showHome();
-  } else if (screen === 'trade') {
+  } else if(screen==='trade'){
     showHome();
   }
 }
-function reloadCurrent() {
-  if (screen === 'home') { dansCache = null; lsDel('dans'); renderHome(); }
-  else if (screen === 'dan') { delete itemsCache[currentDan]; lsDel('items_' + currentDan); showDan(currentDan); }
-  else if (screen === 'item') { showItem(currentDan, currentItem); }
-  else if (screen === 'trade') { showTrade(); }
+function reloadCurrent(){
+  if(screen==='home'){dansCache=null;lsDel('dans');renderHome();}
+  else if(screen==='dan'){delete itemsCache[currentDan];lsDel('items_'+currentDan);showDan(currentDan);}
+  else if(screen==='item'){showItem(currentDan,currentItem);}
+  else if(screen==='trade'){showTrade();}
 }
 
 // ---- 自動保存 ----
-function scheduleAutoSave() {
-  savingPromise = doAutoSave();
-}
-async function doAutoSave() {
-  isSaving = true; showSaving(true);
-  const payload = { action: 'saveItem', dan: currentDan, itemId: currentItem.id, ...editCounts };
-  const res = await apiPost(payload).catch(() => null);
-  showSaving(false); isSaving = false;
-  if (res && res.success) {
-    const cached = itemsCache[currentDan];
-    if (cached) {
-      const idx = cached.findIndex(i => i.id === currentItem.id);
-      if (idx >= 0) { Object.assign(cached[idx], editCounts); lsSet('items_' + currentDan, cached); }
-    }
-    currentItem = { ...currentItem, ...editCounts };
-    dansCache = null; lsDel('dans');
+function scheduleAutoSave(){savingPromise=doAutoSave()}
+async function doAutoSave(){
+  isSaving=true;showSaving(true);
+  const payload={action:'saveItem',dan:currentDan,itemId:currentItem.id,...editCounts};
+  const res=await apiPost(payload).catch(()=>null);
+  showSaving(false);isSaving=false;
+  if(res&&res.success){
+    const cached=itemsCache[currentDan];
+    if(cached){const idx=cached.findIndex(i=>i.id===currentItem.id);if(idx>=0){Object.assign(cached[idx],editCounts);lsSet('items_'+currentDan,cached);}}
+    currentItem={...currentItem,...editCounts};
+    dansCache=null;lsDel('dans');
     showToast('✓ 保存しました');
+  } else {showToast('保存に失敗しました','#e24b4a');}
+}
+
+function fmtPct(r){return Math.round(r*10)/10}
+
+// ---- HOME（全検索つき） ----
+function renderHome(){
+  setTitle('アイプリ管理');setBack(false);setActiveTab('home');
+  const allItems=getAllItems();
+  const q=normalize(homeSearchQuery);
+  // 検索バー
+  const searchBar=`<div class="search-wrap">
+    <div class="search-box">
+      <i class="ti ti-search"></i>
+      <input id="home-search" class="search-input" type="search" placeholder="全アイテムを検索..." value="${homeSearchQuery}">
+    </div>
+  </div>`;
+
+  if(q && allItems.length>0){
+    // 検索結果表示
+    const filtered=allItems.filter(({item})=>normalize(item.name).includes(q)||normalize(item.id).includes(q));
+    const rows=filtered.length===0
+      ? '<div class="trade-empty">該当するアイテムがありません</div>'
+      : filtered.map(({danId,item})=>itemRowHTML(danId,item,true)).join('');
+    setContent(searchBar+`<div class="item-list">${rows}</div>`);
+  } else if(!dansCache){
+    setContent(searchBar+'<div class="loading"><div class="spinner"></div><span>読み込み中...</span></div>');
+    loadDans();
+    return;
   } else {
-    showToast('保存に失敗しました', '#e24b4a');
+    const cards=dansCache.map(d=>{
+      const pct=fmtPct(d.rate??(d.total?d.owned/d.total*100:0));
+      return `<div class="dan-card" onclick="showDan('${d.id}')">
+        <div class="dan-img"><img src="${d.image||''}" alt="${d.id}" loading="lazy" onerror="this.style.display='none'"></div>
+        <div class="dan-footer">
+          <div class="dan-name">${d.id}</div>
+          <div class="dan-meta">${d.owned??0} / ${d.total??0}（${pct}%）</div>
+          <div class="pct-bar"><div class="pct-fill" style="width:${pct}%"></div></div>
+        </div>
+      </div>`;
+    }).join('');
+    setContent(searchBar+`<div class="dan-grid">${cards}</div>`);
+  }
+  // イベントをDOMに直接バインド（再レンダーしない）
+  const inp=document.getElementById('home-search');
+  if(inp){
+    inp.addEventListener('input',e=>{homeSearchQuery=e.target.value;renderHomeSearch();});
+    inp.focus && inp.focus();
   }
 }
 
-function fmtPct(rate) { return Math.round(rate * 10) / 10; }
+function renderHomeSearch(){
+  const q=normalize(homeSearchQuery);
+  const allItems=getAllItems();
+  const list=document.querySelector('.item-list')||document.querySelector('.dan-grid');
+  const container=document.getElementById('content');
+  // 検索バーを残してリストだけ更新
+  const searchWrap=container.querySelector('.search-wrap');
+  if(q){
+    const filtered=allItems.filter(({item})=>normalize(item.name).includes(q)||normalize(item.id).includes(q));
+    const rows=filtered.length===0
+      ? '<div class="trade-empty">該当するアイテムがありません</div>'
+      : filtered.map(({danId,item})=>itemRowHTML(danId,item,true)).join('');
+    const newList=document.createElement('div');
+    newList.className='item-list';
+    newList.innerHTML=rows;
+    if(list) list.replaceWith(newList);
+    else container.appendChild(newList);
+  } else {
+    // 検索クリア→弾グリッドに戻す
+    if(!dansCache){loadDans();return;}
+    const cards=dansCache.map(d=>{
+      const pct=fmtPct(d.rate??(d.total?d.owned/d.total*100:0));
+      return `<div class="dan-card" onclick="showDan('${d.id}')">
+        <div class="dan-img"><img src="${d.image||''}" alt="${d.id}" loading="lazy" onerror="this.style.display='none'"></div>
+        <div class="dan-footer">
+          <div class="dan-name">${d.id}</div>
+          <div class="dan-meta">${d.owned??0} / ${d.total??0}（${pct}%）</div>
+          <div class="pct-bar"><div class="pct-fill" style="width:${pct}%"></div></div>
+        </div>
+      </div>`;
+    }).join('');
+    const newGrid=document.createElement('div');
+    newGrid.className='dan-grid';
+    newGrid.innerHTML=cards;
+    if(list) list.replaceWith(newGrid);
+    else container.appendChild(newGrid);
+  }
+}
 
-// ---- HOME ----
-function renderDansGrid() {
-  const cards = dansCache.map(d => {
-    const pct = fmtPct(d.rate ?? (d.total ? d.owned / d.total * 100 : 0));
-    return `<div class="dan-card" onclick="showDan('${d.id}')">
-      <div class="dan-img"><img src="${d.image||''}" alt="${d.id}" loading="lazy" onerror="this.style.display='none'"></div>
-      <div class="dan-footer">
-        <div class="dan-name">${d.id}</div>
-        <div class="dan-meta">${d.owned ?? 0} / ${d.total ?? 0}（${pct}%）</div>
-        <div class="pct-bar"><div class="pct-fill" style="width:${pct}%"></div></div>
-      </div>
-    </div>`;
+async function loadDans(){
+  const cached=lsGet('dans');
+  if(cached){
+    dansCache=cached;renderHome();
+    showUpdating(true);
+    apiGet({action:'getDans'}).then(res=>{
+      showUpdating(false);
+      if(res&&!res.error){dansCache=res.dans;lsSet('dans',dansCache);if(screen==='home')renderHome();}
+    }).catch(()=>showUpdating(false));
+    return;
+  }
+  const res=await apiGet({action:'getDans'}).catch(()=>null);
+  if(!res||res.error){
+    setContent('<div class="error-box">データを取得できませんでした。</div>');return;
+  }
+  dansCache=res.dans;lsSet('dans',dansCache);renderHome();
+}
+
+function getAllItems(){
+  const result=[];
+  if(!itemsCache) return result;
+  Object.entries(itemsCache).forEach(([danId,items])=>{
+    (items||[]).forEach(item=>result.push({danId,item}));
+  });
+  return result;
+}
+
+function itemRowHTML(danId,item,showDanLabel=false){
+  const complete=PARTS.every(p=>item[p]>0);
+  const chips=PARTS.map(p=>{
+    const v=item[p];
+    const cls=v===0?'zero':v>1?'extra':'has';
+    return `<span class="part-chip ${cls}">${p}: ${v}</span>`;
   }).join('');
-  setContent(`<div class="dan-grid">${cards}</div>`);
-}
-async function renderHome() {
-  setTitle('アイプリ管理'); setBack(false); setActiveTab('home');
-  if (!dansCache) {
-    const cached = lsGet('dans');
-    if (cached) {
-      dansCache = cached; renderDansGrid();
-      showUpdating(true);
-      apiGet({ action: 'getDans' }).then(res => {
-        showUpdating(false);
-        if (res && !res.error) { dansCache = res.dans; lsSet('dans', dansCache); if (screen==='home') renderDansGrid(); }
-      }).catch(() => showUpdating(false));
-      return;
-    }
-    setContent('<div class="loading"><div class="spinner"></div><span>読み込み中...</span></div>');
-    const res = await apiGet({ action: 'getDans' }).catch(() => null);
-    if (!res || res.error) {
-      setContent(`<div class="error-box"><i class="ti ti-alert-circle" style="font-size:24px;display:block;margin-bottom:8px"></i>データを取得できませんでした。</div>`);
-      return;
-    }
-    dansCache = res.dans; lsSet('dans', dansCache);
-  }
-  renderDansGrid();
+  const danLabel=showDanLabel?`<div style="font-size:11px;color:#9ca3af;margin-bottom:2px">${danId}</div>`:'';
+  return `<div class="item-row ${complete?'complete':''}" onclick="openItem('${danId}','${item.id}')">
+    <div class="item-thumb"><img src="${item.image||''}" alt="${item.name}" loading="lazy"
+      onerror="this.parentElement.innerHTML='<div class=no-img><i class=ti ti-photo-off></i></div>'"></div>
+    <div class="item-info">
+      ${danLabel}
+      <div class="item-name-row"><span class="heart">♡</span><span class="item-iname">${item.name}</span></div>
+      <div class="parts-row">${chips}</div>
+    </div>
+    <i class="ti ti-chevron-right" style="color:#f9a8d4;font-size:16px;flex-shrink:0"></i>
+  </div>`;
 }
 
 // ---- DAN ----
-function renderItemList(danId) {
-  const q = normalize(searchQuery);
-  const items = (itemsCache[danId] || []).filter(item => {
-    if (!q) return true;
-    return normalize(item.name).includes(q) || normalize(item.id).includes(q);
-  });
-  const searchBar = `<div class="search-wrap"><div class="search-box">
-    <i class="ti ti-search"></i>
-    <input class="search-input" type="text" placeholder="アイテムを検索..." value="${searchQuery}"
-      oninput="searchQuery=this.value; renderItemList('${danId}')">
-  </div></div>`;
-  if (items.length === 0) {
-    document.getElementById('content').innerHTML = searchBar + '<div class="item-list"><div class="trade-empty">該当するアイテムがありません</div></div>';
-    return;
+function renderItemList(danId){
+  const q=normalize(danSearchQuery);
+  const items=(itemsCache[danId]||[]).filter(item=>!q||normalize(item.name).includes(q)||normalize(item.id).includes(q));
+  const searchBar=`<div class="search-wrap">
+    <div class="search-box">
+      <i class="ti ti-search"></i>
+      <input id="dan-search" class="search-input" type="search" placeholder="この弾を検索..." value="${danSearchQuery}">
+    </div>
+  </div>`;
+  const rows=items.length===0
+    ? '<div class="trade-empty">該当するアイテムがありません</div>'
+    : items.map(item=>itemRowHTML(danId,item,false)).join('');
+  document.getElementById('content').innerHTML=searchBar+`<div class="item-list">${rows}</div>`;
+  const inp=document.getElementById('dan-search');
+  if(inp){
+    inp.addEventListener('input',e=>{
+      danSearchQuery=e.target.value;
+      // リストだけ更新
+      const q2=normalize(danSearchQuery);
+      const items2=(itemsCache[danId]||[]).filter(item=>!q2||normalize(item.name).includes(q2)||normalize(item.id).includes(q2));
+      const list=document.querySelector('.item-list');
+      if(list) list.innerHTML=items2.length===0
+        ? '<div class="trade-empty">該当するアイテムがありません</div>'
+        : items2.map(item=>itemRowHTML(danId,item,false)).join('');
+    });
   }
-  const rows = items.map(item => {
-    const complete = PARTS.every(p => item[p] > 0);
-    const chips = PARTS.map(p => {
-      const v = item[p];
-      const cls = v === 0 ? 'zero' : v > 1 ? 'extra' : 'has';
-      return `<span class="part-chip ${cls}">${p}: ${v}</span>`;
-    }).join('');
-    return `<div class="item-row ${complete?'complete':''}" onclick="openItem('${danId}','${item.id}')">
-      <div class="item-thumb"><img src="${item.image||''}" alt="${item.name}" loading="lazy"
-        onerror="this.parentElement.innerHTML='<div class=no-img><i class=ti ti-photo-off></i></div>'"></div>
-      <div class="item-info">
-        <div class="item-name-row"><span class="heart">♡</span><span class="item-iname">${item.name}</span></div>
-        <div class="parts-row">${chips}</div>
-      </div>
-      <i class="ti ti-chevron-right" style="color:#f9a8d4;font-size:16px;flex-shrink:0"></i>
-    </div>`;
-  }).join('');
-  document.getElementById('content').innerHTML = searchBar + `<div class="item-list" style="margin-top:8px">${rows}</div>`;
 }
-async function renderDan(danId) {
-  setTitle(danId); setBack(true);
-  if (!itemsCache[danId]) {
-    const cached = lsGet('items_' + danId);
-    if (cached) {
-      itemsCache[danId] = cached; renderItemList(danId);
+
+async function renderDan(danId){
+  setTitle(danId);setBack(true);
+  if(!itemsCache[danId]){
+    const cached=lsGet('items_'+danId);
+    if(cached){
+      itemsCache[danId]=cached;renderItemList(danId);
       showUpdating(true);
-      apiGet({ action: 'getItems', dan: danId }).then(res => {
+      apiGet({action:'getItems',dan:danId}).then(res=>{
         showUpdating(false);
-        if (res && !res.error) { itemsCache[danId] = res.items; lsSet('items_' + danId, res.items); if (screen==='dan' && currentDan===danId) renderItemList(danId); }
-      }).catch(() => showUpdating(false));
+        if(res&&!res.error){itemsCache[danId]=res.items;lsSet('items_'+danId,res.items);if(screen==='dan'&&currentDan===danId)renderItemList(danId);}
+      }).catch(()=>showUpdating(false));
       return;
     }
     setContent('<div class="loading"><div class="spinner"></div><span>読み込み中...</span></div>');
-    const res = await apiGet({ action: 'getItems', dan: danId }).catch(() => null);
-    if (!res || res.error) { setContent(`<div class="error-box">データを取得できませんでした。</div>`); return; }
-    itemsCache[danId] = res.items; lsSet('items_' + danId, res.items);
+    const res=await apiGet({action:'getItems',dan:danId}).catch(()=>null);
+    if(!res||res.error){setContent('<div class="error-box">データを取得できませんでした。</div>');return;}
+    itemsCache[danId]=res.items;lsSet('items_'+danId,res.items);
   }
   renderItemList(danId);
 }
-function openItem(danId, itemId) {
-  const item = (itemsCache[danId]||[]).find(i => i.id === itemId);
-  if (item) showItem(danId, item);
+
+function openItem(danId,itemId){
+  // どの階層からでも詳細に飛べる
+  if(!itemsCache[danId]){
+    // キャッシュがない場合は読み込んでから
+    apiGet({action:'getItems',dan:danId}).then(res=>{
+      if(res&&!res.error){itemsCache[danId]=res.items;lsSet('items_'+danId,res.items);}
+      const item=(itemsCache[danId]||[]).find(i=>i.id===itemId);
+      if(item) showItem(danId,item);
+    });
+    return;
+  }
+  const item=(itemsCache[danId]||[]).find(i=>i.id===itemId);
+  if(item) showItem(danId,item);
 }
 
 // ---- ITEM DETAIL ----
-function renderItem(item) {
-  setTitle(currentDan); setBack(true);
-  const partRows = PARTS.map(p => `
+function renderItem(item){
+  setTitle(currentDan);setBack(true);
+  const partRows=PARTS.map(p=>`
     <div class="part-row">
       <div class="part-label">${p}<span>*</span></div>
       <div class="counter">
@@ -350,97 +429,217 @@ function renderItem(item) {
       <div class="detail-name"><span>♡</span>${item.name}</div>
     </div>${partRows}`);
 }
-function adj(part, delta) {
-  editCounts[part] = Math.max(0, (editCounts[part]||0) + delta);
-  const el = document.getElementById('cnt-' + part);
-  if (el) el.textContent = editCounts[part];
+function adj(part,delta){
+  editCounts[part]=Math.max(0,(editCounts[part]||0)+delta);
+  const el=document.getElementById('cnt-'+part);
+  if(el) el.textContent=editCounts[part];
   scheduleAutoSave();
 }
 
 // ---- 交換リスト ----
-function getTradeItems() {
-  const result = [];
-  Object.entries(itemsCache).forEach(([danId, items]) => {
-    (items || []).forEach(item => {
-      const extras = PARTS.filter(p => item[p] > 1);
-      if (extras.length > 0) {
-        result.push({ danId, item, extras });
-      }
+function getTradeItems(){
+  const result=[];
+  Object.entries(itemsCache).forEach(([danId,items])=>{
+    (items||[]).forEach(item=>{
+      const extras=PARTS.filter(p=>item[p]>1);
+      if(extras.length>0) result.push({danId,item,extras});
     });
   });
   return result;
 }
 
-async function showTrade() {
-  screen = 'trade'; currentDan = null; currentItem = null;
-  setTitle('交換リスト'); setBack(false); setActiveTab('trade');
-
-  // キャッシュ未読み込みの弾を全部読み込む
-  if (dansCache) {
-    const loading = dansCache.filter(d => !itemsCache[d.id]);
-    if (loading.length > 0) {
-      setContent('<div class="loading"><div class="spinner"></div><span>データを読み込み中...</span></div>');
-      await Promise.all(loading.map(async d => {
-        const cached = lsGet('items_' + d.id);
-        if (cached) { itemsCache[d.id] = cached; return; }
-        const res = await apiGet({ action: 'getItems', dan: d.id }).catch(() => null);
-        if (res && !res.error) { itemsCache[d.id] = res.items; lsSet('items_' + d.id, res.items); }
+async function showTrade(){
+  screen='trade';currentDan=null;currentItem=null;
+  setTitle('交換リスト');setBack(false);setActiveTab('trade');
+  // 未読み込みの弾を全部読み込む
+  if(dansCache){
+    const missing=dansCache.filter(d=>!itemsCache[d.id]);
+    if(missing.length>0){
+      setContent('<div class="loading"><div class="spinner"></div><span>データ読み込み中...</span></div>');
+      await Promise.all(missing.map(async d=>{
+        const c=lsGet('items_'+d.id);
+        if(c){itemsCache[d.id]=c;return;}
+        const res=await apiGet({action:'getItems',dan:d.id}).catch(()=>null);
+        if(res&&!res.error){itemsCache[d.id]=res.items;lsSet('items_'+d.id,res.items);}
       }));
     }
   }
   renderTradeList();
 }
 
-function renderTradeList() {
-  const trades = getTradeItems();
-  const exportBtn = `<button class="trade-export-btn" onclick="exportTradeImage()"><i class="ti ti-download" style="font-size:14px"></i>画像保存</button>`;
-  const header = `<div class="trade-header"><div class="trade-title">交換できるアイテム（${trades.length}件）</div>${exportBtn}</div>`;
+function renderTradeList(){
+  const allTrades=getTradeItems();
+  const danIds=[...new Set(allTrades.map(t=>t.danId))];
+  const trades=tradeFilter==='all'?allTrades:allTrades.filter(t=>t.danId===tradeFilter);
 
-  if (trades.length === 0) {
-    setContent(header + '<div class="trade-empty">余っているアイテムはありません</div>');
-    return;
-  }
-  const rows = trades.map(({ danId, item, extras }) => {
-    const chips = extras.map(p =>
-      `<span class="trade-chip">${p} +${item[p]-1}</span>`
-    ).join('');
-    return `<div class="trade-item">
-      <div class="trade-thumb"><img src="${item.image||''}" alt="${item.name}" loading="lazy"
-        onerror="this.parentElement.innerHTML='<div class=no-img><i class=ti ti-photo-off></i></div>'"></div>
-      <div class="trade-info">
-        <div class="trade-name">${item.name}</div>
-        <div class="trade-dan">${danId}</div>
-        <div class="trade-parts">${chips}</div>
-      </div>
-    </div>`;
-  }).join('');
-  setContent(`<div id="trade-content">${header}<div>${rows}</div></div>`);
+  // フィルターボタン
+  const filterBtns=[
+    `<button class="filter-btn ${tradeFilter==='all'?'active':''}" onclick="setTradeFilter('all')">すべて</button>`,
+    ...danIds.map(d=>`<button class="filter-btn ${tradeFilter===d?'active':''}" onclick="setTradeFilter('${d}')">${d}</button>`)
+  ].join('');
+
+  const exportBtn=`<button class="trade-export-btn" onclick="exportTradeImage()"><i class="ti ti-download" style="font-size:14px"></i> 画像保存</button>`;
+  const header=`<div class="trade-header"><div class="trade-title">交換（${trades.length}件）</div>${exportBtn}</div>`;
+  const filters=`<div class="filter-row">${filterBtns}</div>`;
+
+  const rows=trades.length===0
+    ? '<div class="trade-empty">余っているアイテムはありません</div>'
+    : trades.map(({danId,item,extras})=>{
+        const chips=extras.map(p=>`<span class="trade-chip">${p} +${item[p]-1}</span>`).join('');
+        return `<div class="trade-item" onclick="openItem('${danId}','${item.id}')">
+          <div class="trade-thumb"><img src="${item.image||''}" alt="${item.name}" loading="lazy"
+            onerror="this.parentElement.innerHTML='<div class=no-img><i class=ti ti-photo-off></i></div>'"></div>
+          <div class="trade-info">
+            <div class="trade-name">${item.name}</div>
+            <div class="trade-dan">${danId}</div>
+            <div class="trade-parts">${chips}</div>
+          </div>
+          <i class="ti ti-chevron-right" style="color:#fde68a;font-size:16px;flex-shrink:0"></i>
+        </div>`;
+      }).join('');
+
+  setContent(`<div id="trade-content">${header}${filters}${rows}</div>`);
 }
 
-// ---- 交換リスト画像出力 ----
-async function exportTradeImage() {
-  const el = document.getElementById('trade-content');
-  if (!el) return;
+function setTradeFilter(danId){
+  tradeFilter=danId;
+  renderTradeList();
+}
+
+// ---- 画像保存（iPhone対応：Canvas手描き） ----
+async function imgToBase64(url){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.crossOrigin='anonymous';
+    img.onload=()=>{
+      const c=document.createElement('canvas');
+      c.width=img.width;c.height=img.height;
+      c.getContext('2d').drawImage(img,0,0);
+      try{resolve(c.toDataURL('image/jpeg',0.8));}catch(e){resolve(null);}
+    };
+    img.onerror=()=>resolve(null);
+    img.src=url+'?t='+Date.now();
+  });
+}
+
+async function exportTradeImage(){
+  const allTrades=getTradeItems();
+  const trades=tradeFilter==='all'?allTrades:allTrades.filter(t=>t.danId===tradeFilter);
+  if(trades.length===0){showToast('交換アイテムがありません','#e24b4a');return;}
   showToast('画像を生成中...');
-  try {
-    const canvas = await html2canvas(el, {
-      backgroundColor: '#fff',
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
+
+  const THUMB=56,PAD=12,GAP=8,ROW_H=76;
+  const W=360;
+  const H=PAD*2+trades.length*(ROW_H+GAP)+40;
+  const canvas=document.createElement('canvas');
+  canvas.width=W*2;canvas.height=H*2;
+  const ctx=canvas.getContext('2d');
+  ctx.scale(2,2);
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+
+  // タイトル
+  ctx.fillStyle='#f472b6';ctx.font='bold 14px sans-serif';
+  ctx.fillText(`交換リスト（${trades.length}件）`,PAD,PAD+14);
+
+  let y=PAD+30;
+  for(const {danId,item,extras} of trades){
+    // カード背景
+    ctx.fillStyle='#fffbeb';
+    roundRect(ctx,PAD,y,W-PAD*2,ROW_H,8);ctx.fill();
+    ctx.strokeStyle='#fde68a';ctx.lineWidth=1;
+    roundRect(ctx,PAD,y,W-PAD*2,ROW_H,8);ctx.stroke();
+
+    // サムネイル
+    const b64=await imgToBase64(item.image||'');
+    if(b64){
+      const img=new Image();
+      await new Promise(r=>{img.onload=r;img.onerror=r;img.src=b64;});
+      ctx.save();
+      roundRect(ctx,PAD+8,y+10,THUMB,THUMB,6);ctx.clip();
+      ctx.drawImage(img,PAD+8,y+10,THUMB,THUMB);
+      ctx.restore();
+    } else {
+      ctx.fillStyle='#fdf2f8';
+      roundRect(ctx,PAD+8,y+10,THUMB,THUMB,6);ctx.fill();
+    }
+
+    // テキスト
+    const tx=PAD+8+THUMB+10;
+    ctx.fillStyle='#9ca3af';ctx.font='10px sans-serif';
+    ctx.fillText(danId,tx,y+18);
+    ctx.fillStyle='#374151';ctx.font='bold 12px sans-serif';
+    const name=item.name.length>16?item.name.slice(0,16)+'…':item.name;
+    ctx.fillText(name,tx,y+34);
+
+    // チップ
+    let cx=tx;
+    extras.forEach(p=>{
+      const label=`${p} +${item[p]-1}`;
+      ctx.font='10px sans-serif';
+      const tw=ctx.measureText(label).width;
+      ctx.fillStyle='#fef3c7';
+      roundRect(ctx,cx,y+42,tw+12,18,6);ctx.fill();
+      ctx.fillStyle='#92400e';
+      ctx.fillText(label,cx+6,y+54);
+      cx+=tw+18;
     });
-    const link = document.createElement('a');
-    link.download = '交換リスト.jpg';
-    link.href = canvas.toDataURL('image/jpeg', 0.9);
-    link.click();
-    showToast('✓ 画像を保存しました');
-  } catch(e) {
-    showToast('画像生成に失敗しました', '#e24b4a');
+    y+=ROW_H+GAP;
   }
+
+  const dataUrl=canvas.toDataURL('image/jpeg',0.9);
+  // iPhoneはaタグdl不可 → モーダルで長押し保存案内
+  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
+  if(isIOS){
+    const overlay=document.createElement('div');
+    overlay.className='modal-overlay';
+    overlay.innerHTML=`<div class="modal-box">
+      <img src="${dataUrl}" alt="交換リスト">
+      <p>画像を長押しして「写真に追加」で保存してください</p>
+      <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">閉じる</button>
+    </div>`;
+    document.body.appendChild(overlay);
+  } else {
+    const a=document.createElement('a');
+    a.download='交換リスト.jpg';a.href=dataUrl;a.click();
+    showToast('✓ 画像を保存しました');
+  }
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);
+  ctx.closePath();
 }
 
 // ---- 起動 ----
-showHome();
+// 初回起動時に全弾データをバックグラウンドでプリフェッチ
+async function prefetchAll(){
+  if(!dansCache) return;
+  for(const d of dansCache){
+    if(!itemsCache[d.id]){
+      const c=lsGet('items_'+d.id);
+      if(c){itemsCache[d.id]=c;continue;}
+      const res=await apiGet({action:'getItems',dan:d.id}).catch(()=>null);
+      if(res&&!res.error){itemsCache[d.id]=res.items;lsSet('items_'+d.id,res.items);}
+    }
+  }
+}
+
+async function init(){
+  // dansキャッシュ読み込み
+  const c=lsGet('dans');
+  if(c) dansCache=c;
+  showHome();
+  // バックグラウンドで最新データ取得＋全弾プリフェッチ
+  const res=await apiGet({action:'getDans'}).catch(()=>null);
+  if(res&&!res.error){dansCache=res.dans;lsSet('dans',dansCache);}
+  await prefetchAll();
+}
+
+init();
 </script>
 </body>
 </html>
