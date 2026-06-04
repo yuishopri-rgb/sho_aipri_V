@@ -120,7 +120,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
   </div>
 </div>
 <div class="app" id="app-root">
-  <div class="topbar">
+  <div class="topbar" onclick="document.getElementById('content').scrollTop=0" style="cursor:pointer">
     <button class="t-back" id="btn-back" style="display:none" onclick="goBack()"><i class="ti ti-arrow-left"></i></button>
     <span class="t-title" id="topbar-title">アイプリ管理</span>
     <button class="t-icon" onclick="reloadCurrent()"><i class="ti ti-refresh"></i></button>
