@@ -104,6 +104,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 </style>
 </head>
 <body>
+<div id="item-popup-overlay" onclick="handlePopupOverlayClick(event)" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:none;align-items:flex-end;justify-content:center">
+  <div id="item-popup" style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:20px 16px 32px;box-shadow:0 -4px 24px rgba(0,0,0,0.15)">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <img id="popup-img" src="" style="width:64px;height:64px;border-radius:10px;object-fit:cover;flex-shrink:0;background:#fdf2f8">
+      <div style="flex:1;min-width:0">
+        <div id="popup-name" style="font-size:14px;font-weight:700;color:#374151;margin-bottom:2px"></div>
+        <div id="popup-dan" style="font-size:11px;color:#9ca3af"></div>
+      </div>
+      <button onclick="closeItemPopup()" style="background:none;border:none;cursor:pointer;font-size:26px;color:#9ca3af;padding:4px;line-height:1">×</button>
+    </div>
+    <div id="popup-parts" style="display:flex;flex-direction:column;gap:14px"></div>
+  </div>
+</div>
 <div class="app" id="app-root">
   <div class="topbar">
     <button class="t-back" id="btn-back" style="display:none" onclick="goBack()"><i class="ti ti-arrow-left"></i></button>
@@ -207,10 +220,12 @@ function openItemPopup(item,danId){
         <button class="popup-cnt-btn" onclick="adj('${p}',1)">＋</button>
       </div>
     </div>`).join('');
-  document.getElementById('item-popup-overlay').classList.add('open');
+  const ov=document.getElementById('item-popup-overlay');
+  ov.style.display='flex';
 }
 function closeItemPopup(){
-  document.getElementById('item-popup-overlay').classList.remove('open');
+  const ov=document.getElementById('item-popup-overlay');
+  ov.style.display='none';
   currentItem=null;
 }
 function handlePopupOverlayClick(e){
