@@ -104,8 +104,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 </style>
 </head>
 <body>
-<button id="scroll-top-btn" onclick="document.getElementById('content').scrollTop=0"
-  style="position:fixed;right:16px;bottom:80px;z-index:150;width:44px;height:44px;border-radius:50%;border:none;background:#f472b6;color:#fff;font-size:20px;box-shadow:0 3px 12px rgba(244,114,182,0.5);cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1">↑</button>
 <div id="item-popup-overlay" onclick="handlePopupOverlayClick(event)" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:center;justify-content:center;padding:16px">
   <div id="item-popup" style="background:#fff;border-radius:24px;width:100%;max-width:400px;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,0.2)">
     <div style="display:flex;justify-content:flex-end;margin-bottom:4px">
@@ -122,7 +120,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
   </div>
 </div>
 <div class="app" id="app-root">
-  <div class="topbar">
+  <div class="topbar" id="topbar">
     <button class="t-back" id="btn-back" style="display:none" onclick="goBack()"><i class="ti ti-arrow-left"></i></button>
     <span class="t-title" id="topbar-title">アイプリ管理</span>
     <button class="t-icon" onclick="reloadCurrent()"><i class="ti ti-refresh"></i></button>
@@ -798,12 +796,15 @@ function roundRect(ctx,x,y,w,h,r){
   ctx.closePath();
 }
 
-// ---- スクロールTOPボタン ----
+// ---- topbarタップでスクロールトップ ----
 document.addEventListener('DOMContentLoaded',()=>{
-  const el=document.getElementById('content');
-  const btn=document.getElementById('scroll-top-btn');
-  el.addEventListener('scroll',()=>{
-    btn.style.display=el.scrollTop>100?'flex':'none';
+  const topbar=document.getElementById('topbar');
+  topbar.addEventListener('touchend',(e)=>{
+    e.preventDefault();
+    document.getElementById('content').scrollTop=0;
+  },{passive:false});
+  topbar.addEventListener('click',()=>{
+    document.getElementById('content').scrollTop=0;
   });
 });
 
