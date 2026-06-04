@@ -136,6 +136,7 @@ let currentDan = null;
 let currentItem = null;
 let dansCache = null;
 let itemsCache = {};
+let savedScrollTop = 0; // 弾リストのスクロール位置
 let editCounts = {};
 let isSaving = false;
 let savingPromise = null;
@@ -190,6 +191,7 @@ function showDan(danId){
   renderDan(danId);
 }
 function showItem(danId,item){
+  savedScrollTop=document.getElementById('content').scrollTop;
   screen='item';currentDan=danId;currentItem=item;
   editCounts={アクセ:item.アクセ,トップス:item.トップス,ボトムス:item.ボトムス,シューズ:item.シューズ};
   renderItem(item);
@@ -202,6 +204,7 @@ async function goBack(){
     setTitle(dan);setBack(true);
     if(itemsCache[dan]) renderItemList(dan);
     else renderDan(dan);
+    document.getElementById('content').scrollTop=savedScrollTop;
   } else if(screen==='dan'){
     showHome();
   } else if(screen==='trade'){
