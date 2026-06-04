@@ -117,7 +117,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
   </button>
   <div id="auth-error" style="color:#ef4444;font-size:13px;margin-top:12px;display:none">パスワードが違います</div>
 </div>
-<div id="app-body" style="display:none;position:relative;z-index:1">
+<div id="app-body" style="display:none;position:relative;z-index:1;pointer-events:none">
 <div id="item-popup-overlay" onclick="handlePopupOverlayClick(event)" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:center;justify-content:center;padding:16px">
   <div id="item-popup" style="background:#fff;border-radius:24px;width:100%;max-width:400px;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,0.2)">
     <div style="display:flex;justify-content:flex-end;margin-bottom:4px">
@@ -813,6 +813,7 @@ function checkAuth(){
     localStorage.setItem(AUTH_KEY,Date.now());
     document.getElementById('auth-screen').style.display='none';
     document.getElementById('app-body').style.display='';
+    document.getElementById('app-body').style.pointerEvents='';
     startApp();
   } else {
     document.getElementById('auth-error').style.display='block';
@@ -826,6 +827,7 @@ function initAuth(){
   if(saved && Date.now()-Number(saved)<AUTH_EXPIRE){
     document.getElementById('auth-screen').style.display='none';
     document.getElementById('app-body').style.display='';
+    document.getElementById('app-body').style.pointerEvents='';
     startApp();
   } else {
     setTimeout(()=>document.getElementById('auth-input').focus(),100);
