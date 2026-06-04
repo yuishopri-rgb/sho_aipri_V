@@ -136,7 +136,6 @@ let currentDan = null;
 let currentItem = null;
 let dansCache = null;
 let itemsCache = {};
-const danScrollPos = {}; // 弾リストのスクロール位置保存
 let editCounts = {};
 let isSaving = false;
 let savingPromise = null;
@@ -186,11 +185,6 @@ function showDan(danId){
   renderDan(danId);
 }
 function showItem(danId,item){
-  if(screen==='dan'){
-    const pos=document.getElementById('content').scrollTop;
-    danScrollPos[danId]=pos;
-    console.log('scroll saved:',danId,pos);
-  }
   screen='item';currentDan=danId;currentItem=item;
   editCounts={アクセ:item.アクセ,トップス:item.トップス,ボトムス:item.ボトムス,シューズ:item.シューズ};
   renderItem(item);
@@ -199,11 +193,9 @@ async function goBack(){
   if(screen==='item'){
     if(isSaving) await savingPromise;
     const dan=currentDan;
-    const scrollY=danScrollPos[dan]||0;
-    console.log('scroll restore:',dan,scrollY);
     screen='dan';currentDan=dan;currentItem=null;
     setTitle(dan);setBack(true);
-    if(itemsCache[dan]) renderItemList(dan,scrollY);
+    if(itemsCache[dan]) renderItemList(dan);
     else renderDan(dan);
   } else if(screen==='dan'){
     showHome();
@@ -399,7 +391,7 @@ function itemRowHTML(danId,item,showDanLabel=false){
 }
 
 // ---- DAN ----
-function renderItemList(danId,restoreScroll){
+function renderItemList(danId){
   const q=normalize(danSearchQuery);
   const items=(itemsCache[danId]||[]).filter(item=>!q||normalize(item.name).includes(q)||normalize(item.id).includes(q));
   // 固定検索バーをDAN用に切り替え
@@ -420,9 +412,7 @@ function renderItemList(danId,restoreScroll){
   const rows=items.length===0
     ? '<div class="trade-empty">該当するアイテムがありません</div>'
     : items.map(item=>itemRowHTML(danId,item,false)).join('');
-  const el=document.getElementById('content');
-  el.innerHTML=`<div class="item-list">${rows}</div>`;
-  if(restoreScroll) el.scrollTop=restoreScroll;
+  document.getElementById('content').innerHTML=`<div class="item-list">${rows}</div>`;
 }
 
 async function renderDan(danId){
