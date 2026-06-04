@@ -155,7 +155,12 @@ function lsDel(k){try{localStorage.removeItem(k)}catch(e){}}
 // ---- UI ----
 function setTitle(t){document.getElementById('topbar-title').textContent=t}
 function setBack(show){document.getElementById('btn-back').style.display=show?'':'none'}
-function setContent(html){document.getElementById('content').innerHTML=html}
+function setContent(html,keepScroll){
+  const el=document.getElementById('content');
+  const pos=keepScroll?el.scrollTop:0;
+  el.innerHTML=html;
+  if(keepScroll) el.scrollTop=pos;
+}
 function showUpdating(show){document.getElementById('updating-bar').classList.toggle('show',show)}
 function showSaving(show){document.getElementById('saving-bar').classList.toggle('show',show)}
 function showToast(msg,color='#1D9E75'){
@@ -412,7 +417,7 @@ function renderItemList(danId){
   const rows=items.length===0
     ? '<div class="trade-empty">該当するアイテムがありません</div>'
     : items.map(item=>itemRowHTML(danId,item,false)).join('');
-  document.getElementById('content').innerHTML=`<div class="item-list">${rows}</div>`;
+  setContent(`<div class="item-list">${rows}</div>`,true);
 }
 
 async function renderDan(danId){
