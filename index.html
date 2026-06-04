@@ -125,8 +125,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
     <span class="t-title" id="topbar-title">アイプリ管理</span>
     <button class="t-icon" onclick="reloadCurrent()"><i class="ti ti-refresh"></i></button>
   </div>
-  <div class="search-bar" id="search-bar" style="display:none">
-    <div class="search-box">
+  <div class="search-bar" id="search-bar" style="display:none" onclick="document.getElementById('content').scrollTop=0">
+    <div class="search-box" onclick="event.stopPropagation()">
       <i class="ti ti-search"></i>
       <input id="global-search" class="search-input" type="search" placeholder="アイテムを検索...">
     </div>
