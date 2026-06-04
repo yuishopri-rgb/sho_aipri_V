@@ -117,7 +117,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
   </button>
   <div id="auth-error" style="color:#ef4444;font-size:13px;margin-top:12px;display:none">パスワードが違います</div>
 </div>
-<div id="app-body" style="display:none">
+<div id="app-body" style="display:none;position:relative;z-index:1">
 <div id="item-popup-overlay" onclick="handlePopupOverlayClick(event)" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:center;justify-content:center;padding:16px">
   <div id="item-popup" style="background:#fff;border-radius:24px;width:100%;max-width:400px;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,0.2)">
     <div style="display:flex;justify-content:flex-end;margin-bottom:4px">
@@ -726,6 +726,7 @@ async function exportTradeImage(){
     } else if(isIOS){
       const w=window.open('');
       w.document.write('<html><body style="margin:0"><img src="'+dataUrl+'" style="width:100%;display:block"><p style="text-align:center;font-family:sans-serif;padding:12px;color:#555">長押しして「写真に追加」で保存</p></div>
+</div>
 </body></html>');
       w.document.close();
     } else {
@@ -869,5 +870,6 @@ async function init(){
 function startApp(){init();}
 document.addEventListener('DOMContentLoaded',initAuth);
 </script>
+</div>
 </body>
 </html>
