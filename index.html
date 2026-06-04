@@ -191,10 +191,12 @@ function showItem(danId,item){
 }
 async function goBack(){
   if(screen==='item'){
-    if(isSaving) await savingPromise;
+    // saveQueue残りも含め全部送信完了を待つ
+    while(isSaving||saveQueue) await (savingPromise||new Promise(r=>setTimeout(r,50)));
     const dan=currentDan;
     screen='dan';currentDan=dan;currentItem=null;
     setTitle(dan);setBack(true);
+    // キャッシュから必ず再描画（最新の所持数を反映）
     if(itemsCache[dan]) renderItemList(dan);
     else renderDan(dan);
   } else if(screen==='dan'){
