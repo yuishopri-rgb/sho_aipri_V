@@ -725,9 +725,7 @@ async function exportTradeImage(){
       showPWAHint();
     } else if(isIOS){
       const w=window.open('');
-      w.document.write('<html><body style="margin:0"><img src="'+dataUrl+'" style="width:100%;display:block"><p style="text-align:center;font-family:sans-serif;padding:12px;color:#555">長押しして「写真に追加」で保存</p></div>
-</div>
-</body></html>');
+      w.document.write('<html><body style="margin:0"><img src="'+dataUrl+'" style="width:100%;display:block"><p style="text-align:center;font-family:sans-serif;padding:12px;color:#555">長押しして「写真に追加」で保存</p></body></html>');
       w.document.close();
     } else {
       const a=document.createElement('a');
@@ -794,15 +792,7 @@ function dataURLtoBlob(dataUrl){
 }
 
 
-function dataURLtoBlob(dataUrl){
-  const arr=dataUrl.split(',');
-  const mime=arr[0].match(/:(.*?);/)[1];
-  const bstr=atob(arr[1]);
-  let n=bstr.length;
-  const u8=new Uint8Array(n);
-  while(n--) u8[n]=bstr.charCodeAt(n);
-  return new Blob([u8],{type:mime});
-}
+
 
 function roundRect(ctx,x,y,w,h,r){
   ctx.beginPath();
