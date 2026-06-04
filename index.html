@@ -104,6 +104,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 </style>
 </head>
 <body>
+<div id="auth-screen" style="position:fixed;inset:0;background:#fff;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;font-family:sans-serif">
+  <div style="font-size:32px;margin-bottom:12px">🎀</div>
+  <div style="font-size:18px;font-weight:700;color:#374151;margin-bottom:6px">アイプリ管理</div>
+  <div style="font-size:13px;color:#9ca3af;margin-bottom:28px">パスワードを入力してください</div>
+  <input id="auth-input" type="password" placeholder="パスワード"
+    style="width:100%;max-width:280px;padding:12px 16px;border:2px solid #fce7f3;border-radius:12px;font-size:16px;outline:none;text-align:center;margin-bottom:12px;box-sizing:border-box"
+    onkeydown="if(event.key==='Enter')checkAuth()">
+  <button onclick="checkAuth()"
+    style="width:100%;max-width:280px;padding:12px;background:#f472b6;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer">
+    ログイン
+  </button>
+  <div id="auth-error" style="color:#ef4444;font-size:13px;margin-top:12px;display:none">パスワードが違います</div>
+</div>
+<div id="app-body" style="display:none">
 <div id="item-popup-overlay" onclick="handlePopupOverlayClick(event)" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:center;justify-content:center;padding:16px">
   <div id="item-popup" style="background:#fff;border-radius:24px;width:100%;max-width:400px;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,0.2)">
     <div style="display:flex;justify-content:flex-end;margin-bottom:4px">
@@ -142,6 +156,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 <div class="toast" id="toast"></div>
 
 <script>
+const API_PASSWORD = '9999'; // GASのAPI_PASSWORDと合わせる
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyxs8MPNf_Tj0Rbj_lcptS4gDlf9opvBF2UrA21KEjzdbbqsZ_gbI_C7HXj8cfNOAk8jw/exec';
 const PARTS = ['アクセ','トップス','ボトムス','シューズ'];
 const CACHE_TTL = 60 * 60 * 1000;
@@ -190,7 +205,7 @@ function setActiveTab(tab){
 
 // ---- API ----
 async function apiGet(p){const r=await fetch(GAS_URL+'?'+new URLSearchParams(p));return r.json()}
-async function apiPost(b){const r=await fetch(GAS_URL,{method:'POST',body:JSON.stringify(b)});return r.json()}
+async function apiPost(b){const r=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({...b,password:API_PASSWORD})});return r.json()}
 
 // ---- ナビ ----
 function showHome(){
@@ -710,7 +725,8 @@ async function exportTradeImage(){
       showPWAHint();
     } else if(isIOS){
       const w=window.open('');
-      w.document.write('<html><body style="margin:0"><img src="'+dataUrl+'" style="width:100%;display:block"><p style="text-align:center;font-family:sans-serif;padding:12px;color:#555">長押しして「写真に追加」で保存</p></body></html>');
+      w.document.write('<html><body style="margin:0"><img src="'+dataUrl+'" style="width:100%;display:block"><p style="text-align:center;font-family:sans-serif;padding:12px;color:#555">長押しして「写真に追加」で保存</p></div>
+</body></html>');
       w.document.close();
     } else {
       const a=document.createElement('a');
@@ -796,17 +812,34 @@ function roundRect(ctx,x,y,w,h,r){
   ctx.closePath();
 }
 
-// ---- topbarタップでスクロールトップ ----
-document.addEventListener('DOMContentLoaded',()=>{
-  const topbar=document.getElementById('topbar');
-  topbar.addEventListener('touchend',(e)=>{
-    e.preventDefault();
-    document.getElementById('content').scrollTop=0;
-  },{passive:false});
-  topbar.addEventListener('click',()=>{
-    document.getElementById('content').scrollTop=0;
-  });
-});
+// ---- 認証 ----
+const AUTH_KEY='aipri_auth';
+const AUTH_EXPIRE=24*60*60*1000; // 24時間
+
+function checkAuth(){
+  const input=document.getElementById('auth-input').value;
+  if(input===API_PASSWORD){
+    localStorage.setItem(AUTH_KEY,Date.now());
+    document.getElementById('auth-screen').style.display='none';
+    document.getElementById('app-body').style.display='';
+    startApp();
+  } else {
+    document.getElementById('auth-error').style.display='block';
+    document.getElementById('auth-input').value='';
+    document.getElementById('auth-input').focus();
+  }
+}
+
+function initAuth(){
+  const saved=localStorage.getItem(AUTH_KEY);
+  if(saved && Date.now()-Number(saved)<AUTH_EXPIRE){
+    document.getElementById('auth-screen').style.display='none';
+    document.getElementById('app-body').style.display='';
+    startApp();
+  } else {
+    setTimeout(()=>document.getElementById('auth-input').focus(),100);
+  }
+}
 
 // ---- 起動 ----
 // 初回起動時に全弾データをバックグラウンドでプリフェッチ
@@ -833,7 +866,8 @@ async function init(){
   await prefetchAll();
 }
 
-init();
+function startApp(){init();}
+document.addEventListener('DOMContentLoaded',initAuth);
 </script>
 </body>
 </html>
