@@ -203,14 +203,8 @@ async function goBack(){
     console.log('scroll restore:',dan,scrollY);
     screen='dan';currentDan=dan;currentItem=null;
     setTitle(dan);setBack(true);
-    if(itemsCache[dan]) renderItemList(dan);
+    if(itemsCache[dan]) renderItemList(dan,scrollY);
     else renderDan(dan);
-    // スクロール位置を復元（描画完了後）
-    setTimeout(()=>{
-      const el=document.getElementById('content');
-      el.scrollTop=scrollY;
-      console.log('scrollTop set to',scrollY,'actual',el.scrollTop);
-    },100);
   } else if(screen==='dan'){
     showHome();
   } else if(screen==='trade'){
@@ -405,7 +399,7 @@ function itemRowHTML(danId,item,showDanLabel=false){
 }
 
 // ---- DAN ----
-function renderItemList(danId){
+function renderItemList(danId,restoreScroll){
   const q=normalize(danSearchQuery);
   const items=(itemsCache[danId]||[]).filter(item=>!q||normalize(item.name).includes(q)||normalize(item.id).includes(q));
   // 固定検索バーをDAN用に切り替え
@@ -426,7 +420,9 @@ function renderItemList(danId){
   const rows=items.length===0
     ? '<div class="trade-empty">該当するアイテムがありません</div>'
     : items.map(item=>itemRowHTML(danId,item,false)).join('');
-  document.getElementById('content').innerHTML=`<div class="item-list">${rows}</div>`;
+  const el=document.getElementById('content');
+  el.innerHTML=`<div class="item-list">${rows}</div>`;
+  if(restoreScroll) el.scrollTop=restoreScroll;
 }
 
 async function renderDan(danId){
