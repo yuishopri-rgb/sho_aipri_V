@@ -136,6 +136,7 @@ let currentDan = null;
 let currentItem = null;
 let dansCache = null;
 let itemsCache = {};
+const danScrollPos = {}; // 弾リストのスクロール位置保存
 let editCounts = {};
 let isSaving = false;
 let savingPromise = null;
@@ -191,14 +192,15 @@ function showItem(danId,item){
 }
 async function goBack(){
   if(screen==='item'){
-    // saveQueue残りも含め全部送信完了を待つ
-    while(isSaving||saveQueue) await (savingPromise||new Promise(r=>setTimeout(r,50)));
+    if(isSaving) await savingPromise;
     const dan=currentDan;
+    const scrollY=danScrollPos[dan]||0;
     screen='dan';currentDan=dan;currentItem=null;
     setTitle(dan);setBack(true);
-    // キャッシュから必ず再描画（最新の所持数を反映）
     if(itemsCache[dan]) renderItemList(dan);
     else renderDan(dan);
+    // スクロール位置を復元
+    requestAnimationFrame(()=>{ document.getElementById('content').scrollTop=scrollY; });
   } else if(screen==='dan'){
     showHome();
   } else if(screen==='trade'){
@@ -252,6 +254,12 @@ async function flushSaveQueue(){
     }
     dansCache=null;lsDel('dans');
     showToast('✓ 保存しました');
+    // 弾リストの所持数表示をキャッシュから即時更新
+    if(screen==='item'&&snapDan===currentDan){
+      // アイテム画面のまま→ヘッダーの所持率だけ更新（再描画不要）
+    } else if(screen==='dan'&&snapDan===currentDan){
+      renderItemList(snapDan);
+    }
   } else {
     showToast('保存に失敗しました','#e24b4a');
   }
@@ -536,6 +544,7 @@ function renderTradeList(){
         </div>`;
       }).join('');
 
+  document.getElementById('content').scrollTop=0;
   setContent(`<div id="trade-content"><div id="screenshot-hint" style="display:none;background:#fef3c7;border-radius:12px;padding:12px;margin-bottom:12px;text-align:center;font-size:13px;color:#92400e;position:sticky;top:0;z-index:10">📸 スクショして保存 → もう一度タップで戻る</div>${header}${filters}${rows}</div>`);
 }
 
@@ -605,14 +614,14 @@ async function exportTradeImage(){
         ${imgTag}
         <div style="flex:1;min-width:0;overflow:hidden">
           <div style="font-size:9px;color:#9ca3af">${danId}</div>
-          <div style="font-size:11px;font-weight:600;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100px">${item.name}</div>
+          <div style="font-size:11px;font-weight:600;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:90px">${item.name}</div>
           <div style="margin-top:2px">${chips}</div>
         </div>
       </div>`;
     }).join('');
 
     const wrap=document.createElement('div');
-    wrap.style.cssText='position:fixed;left:-9999px;top:0;width:360px;background:#fff;padding:10px;font-family:sans-serif;box-sizing:border-box';
+    wrap.style.cssText='position:fixed;left:-9999px;top:0;width:340px;background:#fff;padding:8px;font-family:sans-serif;box-sizing:border-box';
     wrap.innerHTML=`<div style="font-size:13px;font-weight:700;color:#f472b6;margin-bottom:8px">交換リスト（${trades.length}件）</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%;box-sizing:border-box">${rows}</div>`;
     document.body.appendChild(wrap);
