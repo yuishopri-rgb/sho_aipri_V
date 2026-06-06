@@ -143,6 +143,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 <div class="toast" id="toast"></div>
 
 <script>
+const API_PASSWORD = '9999';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyxs8MPNf_Tj0Rbj_lcptS4gDlf9opvBF2UrA21KEjzdbbqsZ_gbI_C7HXj8cfNOAk8jw/exec';
 const PARTS = ['アクセ','トップス','ボトムス','シューズ'];
 const CACHE_TTL = 60 * 60 * 1000;
@@ -190,8 +191,8 @@ function setActiveTab(tab){
 }
 
 // ---- API ----
-async function apiGet(p){const r=await fetch(GAS_URL+'?'+new URLSearchParams(p));return r.json()}
-async function apiPost(b){const r=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({...b,password:API_PASSWORD})});return r.json()}
+async function apiGet(p){const r=await fetch(GAS_URL+'?'+new URLSearchParams({...p,password:sessionPassword}));return r.json()}
+async function apiPost(b){const r=await fetch(GAS_URL,{method:'POST',body:JSON.stringify(b)});return r.json()}
 
 // ---- ナビ ----
 function showHome(){
@@ -788,6 +789,89 @@ function roundRect(ctx,x,y,w,h,r){
   ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);
   ctx.closePath();
 }
+
+// ---- 認証 ----
+const AUTH_KEY='aipri_auth';
+const AUTH_EXPIRE=24*60*60*1000; // 24時間
+
+function checkAuth(){
+  const input=document.getElementById('auth-input').value;
+  if(input===API_PASSWORD){
+    localStorage.setItem(AUTH_KEY,Date.now());
+    document.getElementById('auth-screen').style.display='none';
+  } else {
+    document.getElementById('auth-error').style.display='block';
+    document.getElementById('auth-input').value='';
+    document.getElementById('auth-input').focus();
+  }
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  // 24時間以内にログイン済みならスキップ
+  const saved=localStorage.getItem(AUTH_KEY);
+  if(saved && Date.now()-Number(saved)<AUTH_EXPIRE){
+    document.getElementById('auth-screen').style.display='none';
+  } else {
+    setTimeout(()=>document.getElementById('auth-input').focus(),300);
+  }
+  // ボタンイベント
+  const btn=document.getElementById('auth-btn');
+  btn.addEventListener('click',checkAuth);
+  btn.addEventListener('touchend',(e)=>{e.preventDefault();checkAuth();},{passive:false});
+  // Enterキー
+  document.getElementById('auth-input').addEventListener('keydown',(e)=>{
+    if(e.key==='Enter') checkAuth();
+  });
+});
+
+// ---- 認証（GASでパスワード検証） ----
+const AUTH_KEY='aipri_auth';
+const AUTH_EXPIRE=24*60*60*1000; // 24時間
+let sessionPassword=''; // セッション中のパスワード保持
+
+async function checkAuth(){
+  const input=document.getElementById('auth-input').value;
+  if(!input) return;
+  const btn=document.getElementById('auth-btn');
+  btn.textContent='確認中...';
+  btn.disabled=true;
+  try{
+    const res=await fetch(GAS_URL+'?'+new URLSearchParams({action:'checkPassword',password:input}));
+    const data=await res.json();
+    if(data.ok){
+      sessionPassword=input;
+      localStorage.setItem(AUTH_KEY,Date.now());
+      localStorage.setItem(AUTH_KEY+'_pw',input);
+      document.getElementById('auth-screen').style.display='none';
+    } else {
+      document.getElementById('auth-error').style.display='block';
+      document.getElementById('auth-input').value='';
+      document.getElementById('auth-input').focus();
+    }
+  }catch(e){
+    document.getElementById('auth-error').textContent='通信エラーが発生しました';
+    document.getElementById('auth-error').style.display='block';
+  }
+  btn.textContent='ログイン';
+  btn.disabled=false;
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const saved=localStorage.getItem(AUTH_KEY);
+  const savedPw=localStorage.getItem(AUTH_KEY+'_pw');
+  if(saved && savedPw && Date.now()-Number(saved)<AUTH_EXPIRE){
+    sessionPassword=savedPw;
+    document.getElementById('auth-screen').style.display='none';
+  } else {
+    setTimeout(()=>document.getElementById('auth-input').focus(),300);
+  }
+  const btn=document.getElementById('auth-btn');
+  btn.addEventListener('click',checkAuth);
+  btn.addEventListener('touchend',(e)=>{e.preventDefault();checkAuth();},{passive:false});
+  document.getElementById('auth-input').addEventListener('keydown',(e)=>{
+    if(e.key==='Enter') checkAuth();
+  });
+});
 
 // ---- 起動 ----
 // 初回起動時に全弾データをバックグラウンドでプリフェッチ
