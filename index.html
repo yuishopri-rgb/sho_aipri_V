@@ -594,7 +594,7 @@ function renderTradeList(){
 
   const isIOSnow=/iPad|iPhone|iPod/.test(navigator.userAgent);
   const exportBtn=isIOSnow
-    ?`<button class="trade-export-btn" onclick="printTradeList()"><i class="ti ti-printer" style="font-size:14px"></i> PDF保存</button>`
+    ?''
     :`<button class="trade-export-btn" onclick="exportTradeImage()"><i class="ti ti-download" style="font-size:14px"></i> 画像保存</button>`;
   const header=`<div class="trade-header"><div class="trade-title">${tradeMode==='trade'?'交換':'未所持'}（${filtered.length}件）</div>${exportBtn}</div>`;
   const filters=`<div class="filter-row">${filterBtns}</div>`;
@@ -813,6 +813,16 @@ function roundRect(ctx,x,y,w,h,r){
   ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);
   ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);
   ctx.closePath();
+}
+
+// ---- 起動 ----
+async function init(){
+  const c=lsGet('dans');
+  if(c) dansCache=c;
+  showHome();
+  const res=await apiGet({action:'getDans'}).catch(()=>null);
+  if(res&&!res.error){dansCache=res.dans;lsSet('dans',dansCache);}
+  await prefetchAll();
 }
 
 // ---- 認証（GASでパスワード検証） ----
