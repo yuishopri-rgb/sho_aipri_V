@@ -660,10 +660,6 @@ async function imgToBase64(url){
   return imgCache[url]||null;
 }
 
-function printTradeList(){
-  window.print();
-}
-
 async function exportTradeImage(){
   const allTrades=tradeMode==='trade'?getTradeItems():getMissingItems();
   const trades=tradeFilter==='all'?allTrades:allTrades.filter(t=>t.danId===tradeFilter);
@@ -817,6 +813,7 @@ function roundRect(ctx,x,y,w,h,r){
 
 // ---- 起動 ----
 async function init(){
+  lastInitTime=Date.now();
   const c=lsGet('dans');
   if(c) dansCache=c;
   showHome();
@@ -866,6 +863,16 @@ document.addEventListener('DOMContentLoaded',()=>{
   } else {
     setTimeout(()=>document.getElementById('auth-input').focus(),300);
   }
+  // アプリ復帰時に再読み込み（1時間以上経過した場合のみ）
+  let lastInitTime=Date.now();
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible'&&sessionPassword){
+      if(Date.now()-lastInitTime>60*60*1000){
+        lastInitTime=Date.now();
+        init();
+      }
+    }
+  });
   const btn=document.getElementById('auth-btn');
   btn.addEventListener('click',checkAuth);
   btn.addEventListener('touchend',(e)=>{e.preventDefault();checkAuth();},{passive:false});
